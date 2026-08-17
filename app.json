@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "tarihi-iznik-firini-sales",
+    "name": "Tarihi İznik Fırını",
     "slug": "tarihi-iznik-firini-sales",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "landscape",
     "icon": "./assets/images/icon.png",
     "scheme": "tarihiiznikfirinisales",
     "userInterfaceStyle": "automatic",
@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.tarihiiznikfirini.sales",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

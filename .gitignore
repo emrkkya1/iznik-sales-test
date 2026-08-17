@@ -20,6 +20,7 @@ expo-env.d.ts
 
 # Metro
 .metro-health-check*
+.cache/
 
 # debug
 npm-debug.*
@@ -31,6 +32,9 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.*
+!.env.example
 .env*.local
 
 # typescript
