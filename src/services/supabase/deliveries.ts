@@ -10,6 +10,7 @@ import type {
 } from '@/types';
 
 import { buildReceiptSummary } from '../receiptSummary';
+import { toSnakeCaseItems } from '../deliveryItems';
 import { supabaseClient } from './supabaseClient';
 
 function mapDelivery(row: {
@@ -124,17 +125,28 @@ async function fetchReceiptSummary(deliveryId: string): Promise<ReceiptSummary> 
   if (branchError) throw branchError;
 
   const productIds = (items ?? []).map((item) => item.product_id);
-  const { data: products, error: productsError } = await supabaseClient
-    .from('products')
-    .select('id, name, image_url, is_active')
-    .in('id', productIds);
+  let products: {
+    id: string;
+    name: string;
+    image_url: string | null;
+    is_active: boolean;
+  }[] = [];
 
-  if (productsError) throw productsError;
+  if (productIds.length > 0) {
+    const { data: productData, error: productsError } = await supabaseClient
+      .from('products')
+      .select('id, name, image_url, is_active')
+      .in('id', productIds);
+
+    if (productsError) throw productsError;
+
+    products = productData ?? [];
+  }
 
   return buildReceiptSummary({
     delivery: mapDelivery(delivery),
     items: (items ?? []).map(mapDeliveryItem),
-    products: (products ?? []).map((p) => ({
+    products: products.map((p) => ({
       id: p.id,
       name: p.name,
       imageUrl: p.image_url,
@@ -199,9 +211,11 @@ export const supabaseDeliveryRepository: DeliveryRepository = {
       `,
       )
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+
+    if (!data) return null;
 
     const delivery = data as {
       id: string;
@@ -255,7 +269,7 @@ export const supabaseDeliveryRepository: DeliveryRepository = {
   async createDelivery(input, idempotencyKey) {
     const { data, error } = await supabaseClient.rpc('create_delivery_atomic', {
       p_branch_id: input.branchId,
-      p_items: input.items,
+      p_items: toSnakeCaseItems(input.items),
       p_payment_amount: input.paymentAmount,
       p_payment_type: input.paymentType,
       p_date: input.date,
@@ -270,7 +284,7 @@ export const supabaseDeliveryRepository: DeliveryRepository = {
   async updateDelivery(input) {
     const { error } = await supabaseClient.rpc('update_delivery_atomic', {
       p_delivery_id: input.deliveryId,
-      p_items: input.items,
+      p_items: toSnakeCaseItems(input.items),
       p_date: input.date,
     });
 

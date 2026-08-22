@@ -28,9 +28,6 @@ export function useCreateDelivery() {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] });
       queryClient.invalidateQueries({ queryKey: ['balance'] });
     },
-    onError: () => {
-      idempotencyKeyRef.current = null;
-    },
   });
 }
 

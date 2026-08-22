@@ -37,7 +37,7 @@ export function buildReceiptSummary({
 
   const paymentAmount = payments.reduce((sum, p) => sum + p.amount, 0);
   const previousBalance =
-    branch.currentBalance - delivery.totalSalesAmount + paymentAmount;
+    (branch.currentBalance ?? 0) - delivery.totalSalesAmount + paymentAmount;
 
   return {
     deliveryId: delivery.id,
@@ -48,6 +48,6 @@ export function buildReceiptSummary({
     totalSalesAmount: delivery.totalSalesAmount,
     paymentAmount,
     previousBalance,
-    newBalance: branch.currentBalance,
+    newBalance: branch.currentBalance ?? 0,
   };
 }

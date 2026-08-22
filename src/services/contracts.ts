@@ -39,7 +39,7 @@ export interface ProductRepository {
 
 export interface DeliveryRepository {
   listMyDeliveries(): Promise<Delivery[]>;
-  getDelivery(id: string): Promise<DeliveryWithItems>;
+  getDelivery(id: string): Promise<DeliveryWithItems | null>;
   createDelivery(
     input: CreateDeliveryInput,
     idempotencyKey: string,
