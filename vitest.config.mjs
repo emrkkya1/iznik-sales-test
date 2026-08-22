@@ -13,6 +13,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'react-native-get-random-values': path.resolve(
+        __dirname,
+        './tests/mocks/react-native-get-random-values.js',
+      ),
     },
   },
 });

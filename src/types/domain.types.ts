@@ -28,8 +28,8 @@ export interface Branch {
   id: string;
   districtId: string;
   name: string;
-  currentBalance: number;
-  openingBalance: number;
+  currentBalance?: number;
+  openingBalance?: number;
   isActive: boolean;
 }
 

@@ -33,7 +33,7 @@ export const supabaseLocationRepository: LocationRepository = {
   async listBranches(districtId) {
     let query = supabaseClient
       .from('branches')
-      .select('id, district_id, name, current_balance, opening_balance, is_active')
+      .select('id, district_id, name, is_active')
       .eq('is_active', true)
       .order('name');
 
@@ -49,8 +49,6 @@ export const supabaseLocationRepository: LocationRepository = {
       id: branch.id,
       districtId: branch.district_id,
       name: branch.name,
-      currentBalance: branch.current_balance,
-      openingBalance: branch.opening_balance,
       isActive: branch.is_active,
     }));
   },

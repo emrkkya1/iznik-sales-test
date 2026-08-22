@@ -15,9 +15,11 @@ export const supabaseSessionRepository: SessionRepository = {
       .from('users')
       .select('id, full_name, username, role, is_active')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+
+    if (!data) return null;
 
     return {
       id: data.id,
