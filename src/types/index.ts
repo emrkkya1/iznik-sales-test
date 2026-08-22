@@ -1,10 +1,25 @@
 export type { Database, Json } from './database.types';
 
-export type Branch = {
-  id: string;
-  name: string;
-  createdAt: string;
-};
+export type {
+  UserRole,
+  PaymentType,
+  OperationType,
+  User,
+  City,
+  District,
+  Branch,
+  Product,
+  BranchProduct,
+  BranchProductPrice,
+  Delivery,
+  DeliveryItem,
+  Payment,
+  AuditLog,
+  CreateDeliveryInput,
+  UpdateDeliveryInput,
+  ManualPaymentInput,
+  ReceiptSummary,
+} from './domain.types';
 
 export type AuthSession = {
   accessToken: string;
