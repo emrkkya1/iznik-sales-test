@@ -19,6 +19,9 @@ export type {
   UpdateDeliveryInput,
   ManualPaymentInput,
   ReceiptSummary,
+  BranchProductWithPrice,
+  DeliveryWithItems,
+  DeliveryItemWithProduct,
 } from './domain.types';
 
 export type AuthSession = {

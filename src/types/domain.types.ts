@@ -61,6 +61,7 @@ export interface Delivery {
   userId: string;
   totalSalesAmount: number;
   date: string;
+  idempotencyKey: string | null;
   deletedAt: string | null;
   deletedBy: string | null;
   deletionReason: string | null;
@@ -149,4 +150,26 @@ export interface ReceiptSummary {
   paymentAmount: number;
   previousBalance: number;
   newBalance: number;
+}
+
+// Branch product with effective price and product details for entry screen
+export interface BranchProductWithPrice {
+  id: string;
+  branchId: string;
+  productId: string;
+  isActive: boolean;
+  productName: string;
+  productImageUrl: string | null;
+  currentPrice: number;
+}
+
+// Delivery with expanded relationships for detail/history views
+export interface DeliveryWithItems extends Delivery {
+  items: DeliveryItemWithProduct[];
+  payments: Payment[];
+  branchName: string;
+}
+
+export interface DeliveryItemWithProduct extends DeliveryItem {
+  productName: string;
 }
