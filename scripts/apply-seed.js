@@ -8,6 +8,7 @@ const files = [
   '002_locations.sql',
   '003_branch_products.sql',
   '004_prices.sql',
+  '005_auth_users.sql',
 ];
 
 console.log('Applying seed data...\n');

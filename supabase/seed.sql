@@ -5,3 +5,4 @@
 \i seed-data/002_locations.sql
 \i seed-data/003_branch_products.sql
 \i seed-data/004_prices.sql
+\i seed-data/005_auth_users.sql

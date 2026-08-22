@@ -4,3 +4,7 @@ export { Heading } from './heading';
 export { Input, InputField } from './input';
 export { ScrollView } from './scroll-view';
 export { Text } from './text';
+export { Spinner } from './spinner';
+export { EmptyState } from './empty-state';
+export { ErrorState } from './error-state';
+export { ConfirmDialog } from './confirm-dialog';

@@ -65,6 +65,15 @@ Then choose your platform:
 - **Physical device**: Scan QR code with Expo Go app
 - **Web**: Press `w` or run `npm run web` (development convenience only)
 
+## Dev Seed Users
+
+`supabase db reset` seeds two placeholder accounts (see `supabase/seed-data/005_auth_users.sql`). Replace these with real users before go-live.
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@iznik.test` | `admin123` |
+| Staff | `staff@iznik.test` | `staff123` |
+
 ## Available Scripts
 
 | Script | Description |

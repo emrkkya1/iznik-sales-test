@@ -6,8 +6,11 @@ import { QueryClientProvider } from '@tanstack/react-query';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Spinner } from '@/components/ui/spinner';
 import { validateEnv } from '@/config/env';
 import { queryClient } from '@/hooks/queryClient';
+import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
+import { useAuthStore } from '@/store';
 import '@/global.css';
 
 function AppContent() {
@@ -22,6 +25,10 @@ function AppContent() {
     }
   });
 
+  const { isRestoring } = useAuthBootstrap();
+  const session = useAuthStore((s) => s.session);
+  const user = useAuthStore((s) => s.user);
+
   if (configError) {
     return (
       <View style={styles.errorContainer}>
@@ -31,8 +38,29 @@ function AppContent() {
     );
   }
 
+  if (isRestoring) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Spinner label="Yükleniyor..." />
+      </View>
+    );
+  }
+
+  const role = user?.role;
+
   return (
-    <Stack screenOptions={{ headerShown: false }} />
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Protected guard={!session}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+      <Stack.Protected guard={session !== null && role === 'staff'}>
+        <Stack.Screen name="(staff)" />
+      </Stack.Protected>
+      <Stack.Protected guard={session !== null && role === 'admin'}>
+        <Stack.Screen name="(admin)" />
+      </Stack.Protected>
+    </Stack>
   );
 }
 
@@ -57,6 +85,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#ffffff',
     padding: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
   },
   errorTitle: {
     fontSize: 24,
