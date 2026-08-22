@@ -217,6 +217,7 @@ export type Database = {
           user_id: string;
           total_sales_amount: number;
           date: string;
+          idempotency_key: string | null;
           deleted_at: string | null;
           deleted_by: string | null;
           deletion_reason: string | null;
@@ -229,6 +230,7 @@ export type Database = {
           user_id: string;
           total_sales_amount: number;
           date: string;
+          idempotency_key?: string | null;
           deleted_at?: string | null;
           deleted_by?: string | null;
           deletion_reason?: string | null;
@@ -240,6 +242,7 @@ export type Database = {
           user_id?: string;
           total_sales_amount?: number;
           date?: string;
+          idempotency_key?: string | null;
           deleted_at?: string | null;
           deleted_by?: string | null;
           deletion_reason?: string | null;
@@ -436,6 +439,7 @@ export type Database = {
           p_payment_amount: number;
           p_payment_type: string;
           p_date: string;
+          p_idempotency_key: string;
         };
         Returns: string;
       };

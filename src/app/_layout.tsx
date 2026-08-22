@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { validateEnv } from '@/config/env';
+import { queryClient } from '@/hooks/queryClient';
 import '@/global.css';
 
 function AppContent() {
@@ -37,11 +39,13 @@ function AppContent() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <GluestackUIProvider mode="system">
-        <ErrorBoundary>
-          <AppContent />
-        </ErrorBoundary>
-      </GluestackUIProvider>
+      <QueryClientProvider client={queryClient}>
+        <GluestackUIProvider mode="system">
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
+        </GluestackUIProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }
