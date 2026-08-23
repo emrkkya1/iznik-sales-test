@@ -1288,3 +1288,155 @@ const NAV_ITEMS: { href: Href; label: string; icon: React.ElementType }[] = [
 - [ ] Tablet landscape smoke: sign in → Özet → Şubeler → drill-down → Yeni Şehir → Branch Hub
 - [ ] No regressions in staff workflow
 - [ ] Tahsilatlar route file + nav item removed (no orphan imports)
+
+---
+
+## Session Handoff — From PR-6.0 to PR-6.1
+
+This section captures decisions, fixes, and context from the PR-6.0 cycle that the next session should NOT have to re-discover.
+
+### A. Branching State
+
+- `main` now contains Phase 5 (merged via PR #10) + PR-6.0 (merged). **Branch PR-6.1 from current main, not from an older state.**
+- PR-6.0 was rebased onto Phase 5 once; expect Phase 5 conflicts only on:
+  - `src/hooks/index.ts` (Phase 5 added `useOnlineStatus`, `useEditPrefill`)
+  - `src/services/contracts.ts` (Phase 5 added `BranchLocation`, `DeliveryWithBranch`, `LocationRepository.getBranch`; changed `DeliveryRepository.listMyDeliveries` return type)
+  - `src/types/domain.types.ts` (Phase 5 added new types; both branches added types, all should coexist)
+
+### B. Fixes Shipped in PR-6.0 That PR-6.1 Consumers Must Respect
+
+1. **`BranchHubDetails.openingBalanceDate` was renamed to `branchCreatedAt`** (M3 from review). The TS doc note reads:
+   > `branchCreatedAt` is `branches.created_at`. Today it is also the date the opening balance took effect (create_branch sets opening_balance only at row creation). If opening_balance ever becomes editable post-creation, this field's name will no longer reflect its semantic; rename then.
+
+   PR-6.1's Branch Hub summary card subtitle reads `branchCreatedAt` (not `openingBalanceDate`). Example: `formatDate(summary.data.branchCreatedAt)` produces "23.05.2024'ten beri".
+
+2. **`lastMovementDate` is real `null` when no movements exist** (M1). `formatRelativeDate(null)` MUST handle null gracefully — returns "—" or "Henüz hareket yok" (not "1900-01-01"). Do NOT use the `'1900-01-01'` sentinel.
+
+3. **`list_branch_movements` JSONB keys are camelCase** (`paymentType`, `isDeleted`, `createdAt`). Wire shape uses `jsonb_build_object`; do not assume raw column names. PR-6.2's Hareketler tab consumer must read camelCase fields.
+
+4. **`create_branch` validation order** (L1): auth → district_id NOT NULL → name NOT empty → opening_balance NOT negative → **district existence** → opening_balance lock check → insert. Distinguishing "District not found" from "Opening balances are locked" matters for admin UX.
+
+5. **`mergeTopDistribution` clamps negative topN** (L2). Pass `topN = 7` always; the helper floors to integer and clamps to ≥ 0. Do not pass user-derived values directly without bounds.
+
+### C. Items PR-6.0 Shipped That PR-6.1 MUST NOT Redo
+
+- ❌ Don't add new migration files for Phase 6 PR scope. The migration `20240101000007_phase6_admin_foundation.sql` covers everything PR-6.0 needs.
+- ❌ Don't re-add hooks (useSummaryKpis, useCitiesWithCounts, etc.) — already exported from `@/hooks`.
+- ❌ Don't re-add the distribution merge helper — already at `@/utils/distribution.ts` (`mergeTopDistribution`).
+- ❌ Don't re-add BranchHubDetails type — already in `@/types` (camelCase throughout).
+- ❌ Don't add `openingBalanceDate` back to the wire format — it's `branchCreatedAt` now.
+
+### D. Dependencies PR-6.1 Must Add
+
+- `react-native-gifted-charts@^1.4.50` — pie + line + bar in one library
+- `react-native-linear-gradient@^2.8.3` — peer dependency of gifted-charts for pie fills
+
+Both pure JS + already-linked RN modules. No native rebuild required.
+
+### E. Files PR-6.1 Must Create
+
+Components (per AGENTS.md, new gluestack components live in `src/components/ui/<name>/`):
+
+- `src/components/ui/badge/` — variants: `success, muted, destructive, info`. Used in Branch Hub header (active badge) and city/district/branch rows.
+
+Utilities:
+
+- `src/utils/formatCount.ts` — `formatCount(value: number): string` via `new Intl.NumberFormat('tr-TR')`. Turkish locale integer.
+- `src/utils/formatRelativeDate.ts` — `formatRelativeDate(value: string | null): string`. MUST handle `null` → "—" or "Henüz hareket yok". Relative output: "2 gün önce", "dün", "bugün", "geçen hafta".
+
+Domain components (`src/components/admin/` — new folder):
+
+- `RangeSelector.tsx` — pill segmented control. **Rendered OUTSIDE the ScrollView** for native sticky behavior on Android.
+- `KpiCard.tsx` — icon + title + large value. Loading/error inline.
+- `DistributionCard.tsx` — title + pie chart + legend. Empty state when total is 0.
+- `DailyChartCard.tsx` — title + line chart + empty state.
+- `Breadcrumb.tsx` — clickable segments; current segment non-interactive.
+- `GeographyList.tsx` — list + empty state + footer button.
+- `GeographyListRow.tsx` — title + subtitle + active badge + ⋮ menu.
+- `ActionMenu.tsx` — 3-dots menu → bottom sheet.
+- `FormSheet.tsx` — generic bottom-anchored modal. **Content wrapped in KeyboardAvoidingView** (Android `behavior="height"`). Submit disabled until valid; server error inline.
+- `ActiveBadge.tsx` — green "Aktif" / gray "Pasif" chip (uses Badge component).
+- `SummaryCard.tsx` — Branch Hub summary card (title + value + optional subtitle + optional colorCoded).
+
+Screens (`src/screens/admin/`):
+
+- `SummaryScreen.tsx` — uses RangeSelector, KpiCard, DistributionCard, DailyChartCard.
+- `BranchesScreen.tsx` — drill-down router. Uses useGeographyDrilldown + GeographyList.
+- `BranchHubScreen.tsx` — shell only. Header + 4 SummaryCards + tab row stub.
+- `BranchHubTabsPlaceholder.tsx` — EmptyState per tab until PR-6.2.
+
+Hooks (`src/hooks/`):
+
+- `useGeographyDrilldown.ts` — query-param state. **NOTE**: Expo Router 57 returns `string | string[] | undefined`; wrap with `pickFirst()` helper.
+
+Routes (`src/app/(admin)/`):
+
+- `summary.tsx` → `<SummaryScreen />`
+- `branches.tsx` → `<BranchesScreen />`
+- `branches/[branchId].tsx` → `<BranchHubScreen />` (NEW route file)
+- `payments.tsx` → **DELETE** (route + nav item gone)
+
+Nav update (`src/screens/admin/AdminShell.tsx`):
+
+```typescript
+const NAV_ITEMS = [
+  { href: '/summary', label: 'Özet', icon: BarChart3Icon },
+  { href: '/branches', label: 'Şubeler', icon: StoreIcon },
+  { href: '/products', label: 'Ürünler', icon: PackageIcon },
+  { href: '/records', label: 'Kayıtlar', icon: ListIcon },
+  { href: '/settings', label: 'Ayarlar', icon: SettingsIcon },
+];
+```
+
+### F. Navigation Contract (Expo Router 57 specifics)
+
+- Initial drill-down: `router.push({ pathname: '/branches', params: { city: id } })`
+- Clear deeper params: `router.setParams({ district: undefined })` — **use `undefined` to REMOVE a param**, not `null`
+- Go to root: `router.push('/branches')`
+- Hardware back: handled automatically (removes one query param per press)
+
+### G. Tests PR-6.1 Should Add
+
+- `tests/utils/formatCount.test.ts` — Turkish locale, negative numbers, zero, large
+- `tests/utils/formatRelativeDate.test.ts` — `null` → "—" or fallback; today; yesterday; future dates; years ago
+- `tests/utils/mergeTopDistribution.test.ts` — already in PR-6.0; **do not duplicate**
+
+The migration integration tests (`tests/integration/rpcs.test.ts` and `rls.test.ts`) are still deferred — require `supabase db start` + local DB. Out of scope for PR-6.1.
+
+### H. Things Worth Re-Confirming With User in Next Session
+
+Before starting, double-check with the user:
+
+1. **Empty-state wording** for branch hub Son İşlem card when `lastMovementDate === null` — "—" or "Henüz hareket yok"?
+2. **ActiveBadge color** — green primary (e.g., `bg-primary/10 text-primary`) or use `success` token from the new Badge component?
+3. **Range selector initial state** — `week` (current week) by default, or `month`?
+4. **Branch hub "Son İşlem" precision** — show time component or date-only?
+5. **Tablet minimum width assumption** — assume 1024px landscape (matches Android tablets in production). Smaller screens (e.g., 800px) would need a different layout — defer or document as a known limitation?
+
+### I. Architectural Reminders (from 00-execution-map.md)
+
+- **No client-side balance calculation.** All balance values come from `get_branch_balance` or `get_branch_hub_details`.
+- **No direct Supabase calls in screens.** Every screen consumes hooks; hooks consume `services.adminLocations` / `services.reports`.
+- **No Zustand for admin UI state.** Use `useState` for range selector + active tab; `useLocalSearchParams` for drill-down.
+- **`flex-1` for critical root layouts.** Use `style={{ flex: 1 }}` (not `className="flex-1"`) for the root shell per AGENTS.md Android-layout warning.
+
+### K. Quick File Map for Next Session
+
+| File | What it does |
+|---|---|
+| `src/services/supabase/adminLocations.ts` | All admin location + hub RPC adapters (12 methods). **Read this** to see exact return shapes. |
+| `src/services/supabase/reports.ts` | 4 report RPC adapters. Returns camelCase JSONB shapes. |
+| `src/hooks/useReports.ts` | 4 parallel-fetch hooks with `placeholderData: keepPreviousData`. **Template for new range-driven hooks.** |
+| `src/hooks/useAdminLocations.ts` | Geography list queries + 8 mutations + `useBranchHubSummary` composite. **Template for `useSet*Active` invalidation patterns.** |
+| `src/utils/distribution.ts` | `mergeTopDistribution(rows, topN)` — clamps negative topN, filters NaN/Infinity/zero/negative. |
+| `src/types/domain.types.ts` | All 11 Phase 6 types. Search for `BranchHubDetails`, `DistributionRow`, `SummaryRange`, `CityWithCounts`, `BranchMovementRow` etc. |
+| `supabase/migrations/20240101000007_phase6_admin_foundation.sql` | All 16 RPCs + schema changes. **Source of truth for wire shapes.** |
+| `.roadmap/06-admin-master-data-and-balance-operations.md` | Locked decisions table + Phase 7 boundary notes. |
+
+### L. Don't Forget
+
+- `app.json` — check if any new permissions needed (no — chart libs are JS-only, no native modules requiring config)
+- `tailwind` / `global.css` — semantic tokens already defined; reuse `bg-primary`, `text-foreground`, `border-border`, etc.
+- `gluestack-ui-provider` — already wraps everything; no new provider needed
+- `ErrorBoundary` — already at root in `src/app/_layout.tsx`
+- `React Query` cache key namespace — keep `'admin'` prefix on all new keys
