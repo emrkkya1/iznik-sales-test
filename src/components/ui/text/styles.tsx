@@ -12,7 +12,7 @@ export const textStyle = tva({
       true: 'web:truncate',
     },
     bold: {
-      true: 'font-bold',
+      true: 'font-heavy',
     },
     underline: {
       true: 'underline',
