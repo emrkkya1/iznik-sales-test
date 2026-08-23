@@ -181,3 +181,107 @@ export interface DeliveryWithBranch extends Delivery {
 export interface DeliveryItemWithProduct extends DeliveryItem {
   productName: string;
 }
+
+// ============================================
+// Phase 6: Admin Master Data And Balance Operations
+// ============================================
+
+// Summary screen range selector
+export type SummaryRange = 'week' | 'month' | 'all';
+
+// Özet KPIs
+export interface SummaryKpis {
+  totalSales: number;
+  totalCollection: number;
+  activeBranchCount: number;
+  activeProductCount: number;
+}
+
+// Distribution pie chart rows (server returns ranked raw rows; UI merges via util)
+export interface DistributionRow {
+  id: string;
+  label: string;
+  value: number;
+  isMerged?: boolean;
+}
+
+// Daily earnings chart series
+export interface DailySeriesPoint {
+  // Always YYYY-MM-DD; client-side formatter derives display label from granularity.
+  bucket: string;
+  sales: number;
+}
+
+export interface DailySeriesResult {
+  granularity: 'day' | 'week' | 'month';
+  points: DailySeriesPoint[];
+}
+
+// Geography list types (with counts)
+export interface CityWithCounts extends City {
+  districtCount: number;
+  branchCount: number;
+  isActive: boolean;
+}
+
+export interface DistrictWithCounts extends District {
+  branchCount: number;
+  activeBranchCount: number;
+  isActive: boolean;
+}
+
+export interface BranchWithContext extends Branch {
+  currentBalance: number;
+  activeProductCount: number;
+  isActive: boolean;
+}
+
+// Branch Hub summary card details (returned by get_branch_hub_details)
+// Note: `branchCreatedAt` is `branches.created_at`. Today it is also the date
+// the opening balance took effect (create_branch sets opening_balance only at
+// row creation). If opening_balance ever becomes editable post-creation, this
+// field's name will no longer reflect its semantic; rename then.
+export interface BranchHubDetails {
+  name: string;
+  districtName: string;
+  cityName: string;
+  openingBalance: number;
+  branchCreatedAt: string;
+  isActive: boolean;
+  activeProductCount: number;
+  totalProductCount: number;
+  lastMovementDate: string | null;
+}
+
+// Inputs for geography create mutations
+export interface CreateCityInput {
+  name: string;
+}
+
+export interface CreateDistrictInput {
+  cityId: string;
+  name: string;
+}
+
+export interface CreateBranchInput {
+  districtId: string;
+  name: string;
+  openingBalance: number;
+  isActive: boolean;
+}
+
+// Branch movement entry (from list_branch_movements RPC)
+export interface BranchMovementRow {
+  id: string;
+  type: 'delivery' | 'payment';
+  date: string;
+  amount: number;
+  paymentType: string | null;
+  isDeleted: boolean;
+  createdAt: string;
+}
+
+export interface BranchMovements {
+  deliveries: BranchMovementRow[];
+  payments: BranchMovementRow[];
+}
