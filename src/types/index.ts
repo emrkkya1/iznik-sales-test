@@ -24,6 +24,20 @@ export type {
   DeliveryWithItems,
   DeliveryWithBranch,
   DeliveryItemWithProduct,
+  SummaryRange,
+  SummaryKpis,
+  DistributionRow,
+  DailySeriesPoint,
+  DailySeriesResult,
+  CityWithCounts,
+  DistrictWithCounts,
+  BranchWithContext,
+  BranchHubDetails,
+  CreateCityInput,
+  CreateDistrictInput,
+  CreateBranchInput,
+  BranchMovementRow,
+  BranchMovements,
 } from './domain.types';
 
 export type AuthSession = {

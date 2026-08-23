@@ -473,6 +473,80 @@ export type Database = {
         };
         Returns: number;
       };
+      // Phase 6 admin foundation RPCs (PR-6.0)
+      create_city: {
+        Args: { p_name: string };
+        Returns: string;
+      };
+      create_district: {
+        Args: { p_city_id: string; p_name: string };
+        Returns: string;
+      };
+      create_branch: {
+        Args: {
+          p_district_id: string;
+          p_name: string;
+          p_opening_balance: number;
+          p_is_active: boolean;
+        };
+        Returns: string;
+      };
+      set_city_active: {
+        Args: { p_city_id: string; p_is_active: boolean };
+        Returns: undefined;
+      };
+      set_district_active: {
+        Args: { p_district_id: string; p_is_active: boolean };
+        Returns: undefined;
+      };
+      set_branch_active: {
+        Args: { p_branch_id: string; p_is_active: boolean };
+        Returns: undefined;
+      };
+      set_opening_balances_locked: {
+        Args: { p_locked: boolean };
+        Returns: undefined;
+      };
+      list_cities_with_counts: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      list_districts_with_counts: {
+        Args: { p_city_id: string };
+        Returns: Json;
+      };
+      list_branches_with_context: {
+        Args: { p_district_id: string };
+        Returns: Json;
+      };
+      get_opening_balances_locked: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      get_branch_hub_details: {
+        Args: { p_branch_id: string };
+        Returns: Json;
+      };
+      report_kpis: {
+        Args: { p_range: string };
+        Returns: Json;
+      };
+      report_product_distribution: {
+        Args: { p_range: string; p_limit?: number };
+        Returns: Json;
+      };
+      report_branch_distribution: {
+        Args: { p_range: string; p_limit?: number };
+        Returns: Json;
+      };
+      report_daily_series: {
+        Args: { p_range: string };
+        Returns: Json;
+      };
+      list_branch_movements: {
+        Args: { p_branch_id: string; p_limit?: number; p_offset?: number };
+        Returns: Json;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

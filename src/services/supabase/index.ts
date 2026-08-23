@@ -5,3 +5,5 @@ export { supabaseProductRepository } from './products';
 export { supabaseDeliveryRepository } from './deliveries';
 export { supabasePaymentRepository } from './payments';
 export { supabaseLedgerRepository } from './ledger';
+export { supabaseAdminLocationRepository } from './adminLocations';
+export { supabaseReportsRepository } from './reports';

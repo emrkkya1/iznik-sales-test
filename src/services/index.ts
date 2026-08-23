@@ -1,11 +1,13 @@
 import type { AppServices } from './contracts';
 import {
+  supabaseAdminLocationRepository,
   supabaseAuthRepository,
   supabaseDeliveryRepository,
   supabaseLedgerRepository,
   supabaseLocationRepository,
   supabasePaymentRepository,
   supabaseProductRepository,
+  supabaseReportsRepository,
   supabaseSessionRepository,
 } from './supabase';
 
@@ -18,6 +20,8 @@ export type {
   DeliveryRepository,
   PaymentRepository,
   LedgerRepository,
+  AdminLocationRepository,
+  ReportsRepository,
 } from './contracts';
 
 export { buildReceiptSummary } from './receiptSummary';
@@ -31,4 +35,6 @@ export const services: AppServices = {
   deliveries: supabaseDeliveryRepository,
   payments: supabasePaymentRepository,
   ledger: supabaseLedgerRepository,
+  adminLocations: supabaseAdminLocationRepository,
+  reports: supabaseReportsRepository,
 };
