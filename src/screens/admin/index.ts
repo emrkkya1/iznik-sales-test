@@ -1,1 +1,2 @@
-export const ADMIN_SCREEN_SCOPE = 'admin' as const;
+export { AdminShell } from './AdminShell';
+export { AdminPlaceholderScreen } from './AdminPlaceholderScreen';

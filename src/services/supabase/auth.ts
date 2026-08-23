@@ -31,4 +31,10 @@ export const supabaseAuthRepository: AuthRepository = {
     const { error } = await supabaseClient.auth.signOut();
     if (error) throw error;
   },
+  onAuthStateChange(callback) {
+    const { data } = supabaseClient.auth.onAuthStateChange((_event, session) => {
+      callback(session ? toAuthSession(session) : null);
+    });
+    return () => data.subscription.unsubscribe();
+  },
 };

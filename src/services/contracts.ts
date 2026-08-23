@@ -18,6 +18,7 @@ export interface AuthRepository {
   getSession(): Promise<AuthSession | null>;
   signIn(email: string, password: string): Promise<AuthSession>;
   signOut(): Promise<void>;
+  onAuthStateChange(callback: (session: AuthSession | null) => void): () => void;
 }
 
 export interface SessionRepository {

@@ -1,25 +1,54 @@
-export type ErrorType = 'network' | 'auth' | 'validation' | 'unknown';
+export type ErrorType = 'network' | 'auth' | 'validation' | 'unknown' | 'inactive';
 
 const errorMessages: Record<ErrorType, string> = {
   network: 'Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.',
-  auth: 'Oturum süresi doldu. Lütfen tekrar giriş yapın.',
+  auth: 'E-posta veya şifre hatalı.',
   validation: 'Girdiğiniz bilgileri kontrol edin.',
+  inactive: 'Hesabınız devre dışı. Lütfen yöneticinizle iletişime geçin.',
   unknown: 'Bir sorun oluştu. Lütfen tekrar deneyin.',
 };
 
-export function getUserMessage(error: unknown): string {
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
+interface SupabaseLikeError {
+  message?: string;
+  code?: string;
+  status?: number;
+  name?: string;
+  __isAuthError?: boolean;
+}
 
-    if (message.includes('network') || message.includes('fetch') || message.includes('connection')) {
-      return errorMessages.network;
+export function getUserMessage(error: unknown): string {
+  const err = error as SupabaseLikeError | null;
+
+  if (err && typeof err === 'object') {
+    if (err.name === 'InactiveAccountError' || /inactive/i.test(err.message ?? '')) {
+      return errorMessages.inactive;
     }
 
-    if (message.includes('auth') || message.includes('session') || message.includes('token')) {
+    if (err.__isAuthError || err.name === 'AuthApiError') {
+      if (err.status === 401 || err.status === 403) {
+        return errorMessages.auth;
+      }
+    }
+
+    const message = (err.message ?? '').toLowerCase();
+
+    if (/invalid login credentials/.test(message)) {
       return errorMessages.auth;
     }
 
-    if (message.includes('validation') || message.includes('invalid')) {
+    if (/email not confirmed|email_confirmed/.test(message)) {
+      return errorMessages.auth;
+    }
+
+    if (/jwt expired|invalid jwt|refresh token not found|session.*expire/i.test(message)) {
+      return errorMessages.auth;
+    }
+
+    if (/network|fetch|connection|failed to fetch|socket/i.test(message)) {
+      return errorMessages.network;
+    }
+
+    if (/validation|invalid input|violates/i.test(message)) {
       return errorMessages.validation;
     }
   }
