@@ -356,3 +356,124 @@ const LogOutIcon = createIcon({
 });
 LogOutIcon.displayName = 'LogOutIcon';
 export { LogOutIcon };
+
+const PlusIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Line x1="12" y1="5" x2="12" y2="19" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="5" y1="12" x2="19" y2="12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+PlusIcon.displayName = 'PlusIcon';
+export { PlusIcon };
+
+const MinusIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Line x1="5" y1="12" x2="19" y2="12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+MinusIcon.displayName = 'MinusIcon';
+export { MinusIcon };
+
+const WifiOffIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Line x1="2" y1="2" x2="22" y2="22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M8.5 16.5C10.4 14.6 13.6 14.6 15.5 16.5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M5 12.55C8.8 8.75 15.2 8.75 19 12.55" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M1.42 9C7.5 2.94 16.5 2.94 22.58 9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M12 20H12.01" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+WifiOffIcon.displayName = 'WifiOffIcon';
+export { WifiOffIcon };
+
+const UserIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="12" cy="7" r="4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+UserIcon.displayName = 'UserIcon';
+export { UserIcon };
+
+const CloseIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Line x1="18" y1="6" x2="6" y2="18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="6" y1="6" x2="18" y2="18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+CloseIcon.displayName = 'CloseIcon';
+export { CloseIcon };
+
+const CalendarIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="16" y1="2" x2="16" y2="6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+CalendarIcon.displayName = 'CalendarIcon';
+export { CalendarIcon };
+
+const ChevronLeftIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Path d="M15 18L9 12L15 6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+ChevronLeftIcon.displayName = 'ChevronLeftIcon';
+export { ChevronLeftIcon };
+
+const ReceiptIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Path d="M4 2V22L6 20L8 22L10 20L12 22L14 20L16 22L18 20L20 22V2L18 4L16 2L14 4L12 2L10 4L8 2L6 4L4 2Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="8" y1="8" x2="16" y2="8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Line x1="8" y1="12" x2="16" y2="12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+ReceiptIcon.displayName = 'ReceiptIcon';
+export { ReceiptIcon };
+
+const EditIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M15 5l4 4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+EditIcon.displayName = 'EditIcon';
+export { EditIcon };

@@ -4,6 +4,8 @@ import {
   getIstanbulToday,
   canEditDelivery,
   formatDateForDisplay,
+  parseIsoDate,
+  formatIsoDate,
 } from '@/utils/dates';
 
 describe('getIstanbulToday', () => {
@@ -44,5 +46,19 @@ describe('formatDateForDisplay', () => {
     expect(formatted).toMatch(/15/);
     expect(formatted).toMatch(/03/);
     expect(formatted).toMatch(/2024/);
+  });
+});
+
+describe('parseIsoDate / formatIsoDate', () => {
+  it('round-trips a normal date', () => {
+    expect(formatIsoDate(parseIsoDate('2024-03-15'))).toBe('2024-03-15');
+  });
+
+  it('round-trips a leap day', () => {
+    expect(formatIsoDate(parseIsoDate('2024-02-29'))).toBe('2024-02-29');
+  });
+
+  it('round-trips a year boundary', () => {
+    expect(formatIsoDate(parseIsoDate('2023-12-31'))).toBe('2023-12-31');
   });
 });

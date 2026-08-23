@@ -25,3 +25,11 @@ export function useBranches(districtId: string | null) {
     enabled: !!districtId,
   });
 }
+
+export function useBranchLocation(branchId: string | null) {
+  return useQuery({
+    queryKey: ['branch-location', branchId],
+    queryFn: () => services.locations.getBranch(branchId as string),
+    enabled: !!branchId,
+  });
+}

@@ -130,12 +130,17 @@ type IButtonProps = Omit<
 const Button = React.forwardRef<
   React.ElementRef<typeof UIButton>,
   IButtonProps
->(({ className, variant = 'default', size = 'default', ...props }, ref) => {
+>(({ className, variant = 'default', size = 'default', disabled, ...props }, ref) => {
   return (
     <UIButton
       ref={ref}
       {...props}
-      className={buttonStyle({ variant, size, class: className })}
+      disabled={disabled}
+      className={buttonStyle({
+        variant,
+        size,
+        class: `${className ?? ''} ${disabled ? 'opacity-40' : ''}`,
+      })}
       context={{ variant, size }}
     />
   );
