@@ -33,6 +33,10 @@ export interface Branch {
   isActive: boolean;
 }
 
+export interface BranchLocation extends Branch {
+  cityId: string | null;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -167,6 +171,10 @@ export interface BranchProductWithPrice {
 export interface DeliveryWithItems extends Delivery {
   items: DeliveryItemWithProduct[];
   payments: Payment[];
+  branchName: string;
+}
+
+export interface DeliveryWithBranch extends Delivery {
   branchName: string;
 }
 

@@ -1,10 +1,11 @@
 import type {
   AuthSession,
   Branch,
+  BranchLocation,
   BranchProductWithPrice,
   City,
   CreateDeliveryInput,
-  Delivery,
+  DeliveryWithBranch,
   DeliveryWithItems,
   District,
   ManualPaymentInput,
@@ -29,6 +30,7 @@ export interface LocationRepository {
   listCities(): Promise<City[]>;
   listDistricts(cityId: string): Promise<District[]>;
   listBranches(districtId?: string): Promise<Branch[]>;
+  getBranch(branchId: string): Promise<BranchLocation | null>;
 }
 
 export interface ProductRepository {
@@ -39,7 +41,7 @@ export interface ProductRepository {
 }
 
 export interface DeliveryRepository {
-  listMyDeliveries(): Promise<Delivery[]>;
+  listMyDeliveries(): Promise<DeliveryWithBranch[]>;
   getDelivery(id: string): Promise<DeliveryWithItems | null>;
   createDelivery(
     input: CreateDeliveryInput,

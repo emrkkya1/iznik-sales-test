@@ -52,4 +52,25 @@ export const supabaseLocationRepository: LocationRepository = {
       isActive: branch.is_active,
     }));
   },
+
+  async getBranch(branchId) {
+    const { data, error } = await supabaseClient
+      .from('branches')
+      .select('id, district_id, name, is_active, districts (city_id)')
+      .eq('id', branchId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      districtId: data.district_id,
+      name: data.name,
+      isActive: data.is_active,
+      cityId:
+        (data as { districts: { city_id: string } | null }).districts
+          ?.city_id ?? null,
+    };
+  },
 };

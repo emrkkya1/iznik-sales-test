@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 
 import { services } from '@/services';
 import { useAuthStore } from '@/store';
+import { logMutation } from '@/utils/logger';
 
 interface SignInVariables {
   email: string;
@@ -27,9 +28,22 @@ export function useSignIn() {
 
       return { session, user };
     },
+    onMutate: ({ email }) => {
+      // Never log the password.
+      logMutation('signIn', 'start', { email });
+    },
     onSuccess: ({ session, user }) => {
+      logMutation('signIn', 'success', {
+        userId: user.id,
+        fullName: user.fullName,
+        role: user.role,
+        hasSession: !!session.accessToken,
+      });
       setSession(session);
       setUser(user);
+    },
+    onError: (error) => {
+      logMutation('signIn', 'error', error);
     },
   });
 }

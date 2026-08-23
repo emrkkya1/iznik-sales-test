@@ -13,6 +13,7 @@ import { VStack } from '@/components/ui/vstack';
 import { validateEnv } from '@/config/env';
 import { queryClient } from '@/hooks/queryClient';
 import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useAuthStore } from '@/store';
 import '@/global.css';
 
@@ -31,6 +32,8 @@ function AppContent() {
   const { isRestoring } = useAuthBootstrap();
   const session = useAuthStore((s) => s.session);
   const user = useAuthStore((s) => s.user);
+
+  useOnlineStatus();
 
   if (configError) {
     return (

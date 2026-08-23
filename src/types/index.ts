@@ -8,6 +8,7 @@ export type {
   City,
   District,
   Branch,
+  BranchLocation,
   Product,
   BranchProduct,
   BranchProductPrice,
@@ -21,6 +22,7 @@ export type {
   ReceiptSummary,
   BranchProductWithPrice,
   DeliveryWithItems,
+  DeliveryWithBranch,
   DeliveryItemWithProduct,
 } from './domain.types';
 

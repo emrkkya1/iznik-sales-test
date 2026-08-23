@@ -21,11 +21,11 @@
 
     /* Surfaces */
     --background: 255 255 255;
-    --foreground: 44 33 21;
+    --foreground: 0 0 0;
     --card: 255 255 255;
-    --card-foreground: 44 33 21;
+    --card-foreground: 0 0 0;
     --popover: 255 255 255;
-    --popover-foreground: 44 33 21;
+    --popover-foreground: 0 0 0;
 
     /* Muted / accent — warm creams & browns */
     --muted: 246 240 232;

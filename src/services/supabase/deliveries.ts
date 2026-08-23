@@ -12,6 +12,7 @@ import type {
 import { buildReceiptSummary } from '../receiptSummary';
 import { toSnakeCaseItems } from '../deliveryItems';
 import { supabaseClient } from './supabaseClient';
+import { getIstanbulToday } from '@/utils/dates';
 
 function mapDelivery(row: {
   id: string;
@@ -174,15 +175,20 @@ export const supabaseDeliveryRepository: DeliveryRepository = {
     const { data, error } = await supabaseClient
       .from('deliveries')
       .select(
-        'id, branch_id, user_id, total_sales_amount, date, idempotency_key, deleted_at, deleted_by, deletion_reason, created_at',
+        'id, branch_id, user_id, total_sales_amount, date, idempotency_key, deleted_at, deleted_by, deletion_reason, created_at, branches (name)',
       )
       .eq('user_id', user.id)
+      .eq('date', getIstanbulToday())
       .is('deleted_at', null)
-      .order('date', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
-    return (data ?? []).map(mapDelivery);
+    return (data ?? []).map((row) => ({
+      ...mapDelivery(row),
+      branchName:
+        (row as { branches: { name: string } | null }).branches?.name ?? '—',
+    }));
   },
 
   async getDelivery(id) {
