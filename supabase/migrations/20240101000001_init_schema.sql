@@ -1,6 +1,9 @@
 -- Phase 2: Database Schema Initialization
 -- 11 tables for Tarihi İznik Fırını Sales Application
 
+-- Required for the EXCLUDE (gist) constraint on uuid equality below.
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
 -- ============================================
 -- 1. USERS (linked to Supabase Auth)
 -- ============================================
