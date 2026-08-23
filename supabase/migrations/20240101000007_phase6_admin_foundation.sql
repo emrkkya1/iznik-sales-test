@@ -125,14 +125,16 @@ BEGIN
   IF TRIM(p_name) = '' THEN RAISE EXCEPTION 'Name cannot be empty'; END IF;
   IF p_opening_balance < 0 THEN RAISE EXCEPTION 'Opening balance cannot be negative'; END IF;
 
+  -- Existence check before lock check: a missing district_id is a structural error
+  -- and should not be masked by the (more easily-fixed) lock-state error.
+  IF NOT EXISTS (SELECT 1 FROM districts WHERE id = p_district_id) THEN
+    RAISE EXCEPTION 'District not found';
+  END IF;
+
   SELECT opening_balances_locked INTO v_locked
   FROM app_config WHERE id = '00000000-0000-0000-0000-000000000001'::UUID;
   IF v_locked AND p_opening_balance <> 0 THEN
     RAISE EXCEPTION 'Opening balances are locked; new branches must start at 0';
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM districts WHERE id = p_district_id) THEN
-    RAISE EXCEPTION 'District not found';
   END IF;
 
   INSERT INTO branches (district_id, name, current_balance, opening_balance, is_active)
@@ -311,7 +313,7 @@ BEGIN
     'districtName', d.name,
     'cityName', c.name,
     'openingBalance', b.opening_balance,
-    'openingBalanceDate', b.created_at,
+    'branchCreatedAt', b.created_at,
     'isActive', b.is_active,
     'activeProductCount', (
       SELECT COUNT(DISTINCT bp.product_id)
@@ -325,9 +327,11 @@ BEGIN
       SELECT COUNT(*) FROM products WHERE is_active = TRUE
     ),
     'lastMovementDate', GREATEST(
-      COALESCE((SELECT MAX(date) FROM deliveries WHERE branch_id = b.id AND deleted_at IS NULL), '1900-01-01'::DATE),
-      COALESCE((SELECT MAX(date) FROM payments   WHERE branch_id = b.id AND deleted_at IS NULL), '1900-01-01'::DATE)
+      (SELECT MAX(date) FROM deliveries WHERE branch_id = b.id AND deleted_at IS NULL),
+      (SELECT MAX(date) FROM payments   WHERE branch_id = b.id AND deleted_at IS NULL)
     )
+    -- Both MAXs return NULL when there are no rows; GREATEST(NULL, NULL) is NULL;
+    -- JSONB emits null so the UI gets a real "no movement" signal instead of 1900-01-01.
   ) INTO v_result
   FROM branches b
   JOIN districts d ON d.id = b.district_id
@@ -493,38 +497,44 @@ BEGIN
 
   RETURN jsonb_build_object(
     'deliveries', COALESCE((
-      SELECT jsonb_agg(row_data ORDER BY date DESC, created_at DESC)
+      SELECT jsonb_agg(row_data ORDER BY bucket_date DESC, created_at DESC)
       FROM (
         SELECT
-          id::text AS id,
-          'delivery'::TEXT AS type,
-          date,
-          total_sales_amount AS amount,
-          NULL::TEXT AS payment_type,
-          deleted_at IS NOT NULL AS is_deleted,
+          jsonb_build_object(
+            'id', id::text,
+            'type', 'delivery'::TEXT,
+            'date', date,
+            'amount', total_sales_amount,
+            'paymentType', NULL::TEXT,
+            'isDeleted', deleted_at IS NOT NULL,
+            'createdAt', created_at
+          ) AS row_data,
+          date AS bucket_date,
           created_at
         FROM deliveries
         WHERE branch_id = p_branch_id
-        ORDER BY date DESC, created_at DESC
         LIMIT p_limit OFFSET p_offset
-      ) row_data
+      ) sub
     ), '[]'::jsonb),
     'payments', COALESCE((
-      SELECT jsonb_agg(row_data ORDER BY date DESC, created_at DESC)
+      SELECT jsonb_agg(row_data ORDER BY bucket_date DESC, created_at DESC)
       FROM (
         SELECT
-          id::text AS id,
-          'payment'::TEXT AS type,
-          date,
-          amount,
-          payment_type,
-          deleted_at IS NOT NULL AS is_deleted,
+          jsonb_build_object(
+            'id', id::text,
+            'type', 'payment'::TEXT,
+            'date', date,
+            'amount', amount,
+            'paymentType', payment_type,
+            'isDeleted', deleted_at IS NOT NULL,
+            'createdAt', created_at
+          ) AS row_data,
+          date AS bucket_date,
           created_at
         FROM payments
         WHERE branch_id = p_branch_id
-        ORDER BY date DESC, created_at DESC
         LIMIT p_limit OFFSET p_offset
-      ) row_data
+      ) sub
     ), '[]'::jsonb)
   );
 END;

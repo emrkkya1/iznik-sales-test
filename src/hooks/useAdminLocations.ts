@@ -211,9 +211,14 @@ export function useSetBranchActive() {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       services.adminLocations.setBranchActive(id, isActive),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'branches'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'districts'] });
+      // Hub details include isActive; a stale badge would mislead the admin
+      // who toggled the branch and re-navigated to its Hub.
+      queryClient.invalidateQueries({
+        queryKey: ['admin', 'branch-hub', 'details', variables.id],
+      });
     },
   });
 }

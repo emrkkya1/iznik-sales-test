@@ -1215,7 +1215,7 @@ export function BranchHubScreen() {
             title="Açılış Bakiyesi"
             value={summary.data?.openingBalance ?? null}
             format="currency"
-            subtitle={summary.data?.openingBalanceDate ? formatDate(summary.data.openingBalanceDate) : undefined}
+            subtitle={summary.data?.branchCreatedAt ? formatDate(summary.data.branchCreatedAt) : undefined}
           />
         </HStack>
 

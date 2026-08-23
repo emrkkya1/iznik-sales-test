@@ -117,7 +117,7 @@ export const supabaseAdminLocationRepository: AdminLocationRepository = {
       'get_opening_balances_locked',
     );
     if (error) throw error;
-    return data as boolean;
+    return data as unknown as boolean;
   },
 
   async getBranchHubDetails(branchId) {

@@ -121,4 +121,26 @@ describe('mergeTopDistribution', () => {
       isMerged: true,
     });
   });
+
+  it('clamps negative topN to 0 (no silent drop of last item into merged bucket)', () => {
+    // Without clamping, topN=-1 would slice(0,-1) = first 2 items,
+    // slice(-1) = [last item], producing a misleading "Diğer (1)" with 25.
+    const input = [row('a', 100), row('b', 50), row('c', 25)];
+    const { merged, mergedCount } = mergeTopDistribution(input, -1);
+    expect(mergedCount).toBe(3);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toEqual({
+      id: '__merged__',
+      label: 'Diğer (3)',
+      value: 175,
+      isMerged: true,
+    });
+  });
+
+  it('floors fractional topN', () => {
+    const input = [row('a', 100), row('b', 50), row('c', 25)];
+    const { merged, mergedCount } = mergeTopDistribution(input, 1.7);
+    expect(mergedCount).toBe(2);
+    expect(merged.map((r) => r.id)).toEqual(['a', '__merged__']);
+  });
 });

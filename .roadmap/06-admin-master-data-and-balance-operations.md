@@ -359,7 +359,7 @@ export interface BranchHubDetails {
   districtName: string;
   cityName: string;
   openingBalance: number;
-  openingBalanceDate: string;
+  branchCreatedAt: string;
   isActive: boolean;
   activeProductCount: number;
   totalProductCount: number;

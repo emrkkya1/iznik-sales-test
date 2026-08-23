@@ -6,6 +6,10 @@ export function mergeTopDistribution(
   rows: readonly DistributionRow[],
   topN: number,
 ): { merged: DistributionRow[]; mergedCount: number } {
+  // Negative topN would silently drop the last item into a "Diğer (1)" bucket
+  // because Array.slice treats negative indices as offset-from-end. Clamp.
+  const safeTopN = Math.max(0, Math.floor(topN));
+
   const cleaned = rows.filter(
     (r) => Number.isFinite(r.value) && r.value > 0,
   );
@@ -15,8 +19,8 @@ export function mergeTopDistribution(
   }
 
   const sorted = [...cleaned].sort((a, b) => b.value - a.value);
-  const top = sorted.slice(0, topN);
-  const rest = sorted.slice(topN);
+  const top = sorted.slice(0, safeTopN);
+  const rest = sorted.slice(safeTopN);
 
   if (rest.length === 0) {
     return { merged: top, mergedCount: 0 };

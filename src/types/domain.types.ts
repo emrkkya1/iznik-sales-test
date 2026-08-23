@@ -237,12 +237,16 @@ export interface BranchWithContext extends Branch {
 }
 
 // Branch Hub summary card details (returned by get_branch_hub_details)
+// Note: `branchCreatedAt` is `branches.created_at`. Today it is also the date
+// the opening balance took effect (create_branch sets opening_balance only at
+// row creation). If opening_balance ever becomes editable post-creation, this
+// field's name will no longer reflect its semantic; rename then.
 export interface BranchHubDetails {
   name: string;
   districtName: string;
   cityName: string;
   openingBalance: number;
-  openingBalanceDate: string;
+  branchCreatedAt: string;
   isActive: boolean;
   activeProductCount: number;
   totalProductCount: number;
