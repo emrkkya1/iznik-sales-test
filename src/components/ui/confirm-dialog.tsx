@@ -39,7 +39,7 @@ export function ConfirmDialog({
         onPress={onCancel}
       >
         <Pressable onPress={(e) => e.stopPropagation()}>
-          <Box className="w-full max-w-md rounded-xl border border-border bg-card p-6">
+          <Box className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm">
             <VStack space="md">
               <Text size="lg" bold className="text-foreground">
                 {title}

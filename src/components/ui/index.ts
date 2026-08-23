@@ -1,9 +1,15 @@
 export { Box } from './box';
-export { Button, ButtonText } from './button';
+export { Button, ButtonText, ButtonIcon, ButtonSpinner } from './button';
+export { Divider } from './divider';
 export { Heading } from './heading';
-export { Input, InputField } from './input';
+export { HStack } from './hstack';
+export { Icon } from './icon';
+export { Input, InputField, InputIcon, InputSlot } from './input';
+export { KeyboardAvoidingView } from './keyboard-avoiding-view';
+export { Pressable } from './pressable';
 export { ScrollView } from './scroll-view';
 export { Text } from './text';
+export { VStack } from './vstack';
 export { Spinner } from './spinner';
 export { EmptyState } from './empty-state';
 export { ErrorState } from './error-state';

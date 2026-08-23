@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClientProvider } from '@tanstack/react-query';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Box } from '@/components/ui/box';
 import { Spinner } from '@/components/ui/spinner';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import { validateEnv } from '@/config/env';
 import { queryClient } from '@/hooks/queryClient';
 import { useAuthBootstrap } from '@/hooks/useAuthBootstrap';
@@ -31,18 +33,24 @@ function AppContent() {
 
   if (configError) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Yapılandırma Hatası</Text>
-        <Text style={styles.errorMessage}>{configError}</Text>
-      </View>
+      <Box className="flex-1 items-center justify-center bg-background p-6">
+        <VStack space="md" className="items-center">
+          <Text size="xl" bold className="text-center text-destructive">
+            Yapılandırma Hatası
+          </Text>
+          <Text size="sm" className="text-center text-muted-foreground">
+            {configError}
+          </Text>
+        </VStack>
+      </Box>
     );
   }
 
   if (isRestoring) {
     return (
-      <View style={styles.loadingContainer}>
+      <Box className="flex-1 items-center justify-center bg-background">
         <Spinner label="Yükleniyor..." />
-      </View>
+      </Box>
     );
   }
 
@@ -77,32 +85,3 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    padding: 24,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-  },
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#dc2626',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  errorMessage: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-});
