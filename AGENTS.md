@@ -40,3 +40,67 @@ text) are fine as `className`.
   `src/global.css` `@layer theme :root`).
 - New gluestack components are copied into `src/components/ui/<name>/` (not
   installed as deps) and exported from `src/components/ui/index.ts`.
+
+# Theming (src/global.css)
+
+All colors are defined as CSS custom properties in `src/global.css`, in two
+layers:
+
+1. `@layer theme :root` — raw RGB channel triples (space-separated, e.g.
+   `106 71 21`). This is the single source of truth for palette values.
+2. `@theme inline` — maps each token to a Tailwind utility class via
+   `rgb(var(--x))` (e.g. `--color-primary: rgb(var(--primary))`), which is what
+   makes `bg-primary`, `text-foreground`, etc. work. Font tokens are defined
+   here too (`--font-*` → `font-*` utilities).
+
+## Color palette (light theme)
+
+| Token | Value | Hex | Use |
+|---|---|---|---|
+| `primary` | `106 71 21` | `#6A4715` | brand actions, active nav, primary buttons |
+| `primary-foreground` | `255 252 247` | — | text/icons on `primary` |
+| `secondary` | `0 76 110` | `#004C6E` | secondary brand (navy), secondary buttons |
+| `secondary-foreground` | `255 255 255` | — | text on `secondary` |
+| `background` | `255 255 255` | — | app background |
+| `foreground` | `44 33 21` | — | default body text |
+| `card` / `popover` | `255 255 255` | — | card/popover surfaces |
+| `card-foreground` / `popover-foreground` | `44 33 21` | — | text on cards/popovers |
+| `muted` | `246 240 232` | — | subtle surfaces |
+| `muted-foreground` | `133 101 61` | `#85653D` | secondary text |
+| `accent` | `241 233 224` | — | hover/active surfaces |
+| `accent-foreground` | `106 71 21` | — | text on `accent` |
+| `border` / `input` | `229 220 205` | — | borders, input borders |
+| `ring` | `114 78 28` | `#724E1C` | focus rings |
+| `destructive` | `196 52 40` | — | errors, destructive actions |
+| `destructive-foreground` | `255 255 255` | — | text on `destructive` |
+| `info` | `0 96 147` | `#006093` | informational blue |
+| `info-soft` | `60 116 156` | `#3C749C` | softer blue accent |
+| `info-foreground` / `info-soft-foreground` | `255 255 255` | — | text on info tokens |
+
+## Typography tokens
+
+Defined in `@theme inline` (see "Custom fonts" above):
+
+| Token | Family |
+|---|---|
+| `font-body` | `PlusJakartaSans_400Regular` |
+| `font-medium` | `PlusJakartaSans_500Medium` |
+| `font-heading` | `PlusJakartaSans_600SemiBold` |
+| `font-heavy` | `PlusJakartaSans_700Bold` |
+
+## Rules for extending the theme
+
+- **Never hardcode hex/RGB in components.** Add a new token instead.
+- To add a token: define the RGB triple in `:root`, then map it in
+  `@theme inline` (`--color-<name>: rgb(var(--<name>))`), then use the
+  `bg-<name>` / `text-<name>` / `border-<name>` utility.
+- Keep foreground tokens for any colored background (e.g. `-foreground`).
+- Alpha is done with `/` syntax (`bg-primary/10`, `text-foreground/70`), not
+  `opacity-*` utilities.
+- Spacing: use the standard scale only (`p-4`, `gap-3`, `py-1.5`); no arbitrary
+  values like `p-[13px]`.
+- Radius: `rounded-xl` for cards/containers, `rounded-lg` for buttons/inputs,
+  `rounded-md` for small chips. Keep it consistent.
+- Dark theme: intentionally deferred. When added, only add a
+  `@media (prefers-color-scheme: dark) { :root { ... } }` block — component
+  code stays unchanged because everything uses semantic tokens.
