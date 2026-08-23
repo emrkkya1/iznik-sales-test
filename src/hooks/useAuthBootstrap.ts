@@ -23,20 +23,35 @@ export function useAuthBootstrap() {
 
       setSession(session);
 
-      const user = await services.session.getCurrentUser();
-      if (!active) return;
+      try {
+        const user = await services.session.getCurrentUser();
+        if (!active) return;
 
-      if (user && user.isActive) {
-        setUser(user);
-      } else {
+        if (user && user.isActive) {
+          setUser(user);
+        } else {
+          await services.auth.signOut();
+          if (active) reset();
+        }
+      } catch (error) {
+        if (!active) return;
+        
+        // If JWT validation fails (e.g., clock skew, expired token),
+        // clear the session instead of crashing
+        console.warn('Failed to validate session, clearing:', error);
         await services.auth.signOut();
-        if (active) reset();
+        reset();
       }
     }
 
     async function bootstrap() {
-      const session = await services.auth.getSession();
-      if (active) await applySession(session);
+      try {
+        const session = await services.auth.getSession();
+        if (active) await applySession(session);
+      } catch (error) {
+        console.warn('Failed to restore session:', error);
+        if (active) reset();
+      }
       if (active) setIsRestoring(false);
     }
 
