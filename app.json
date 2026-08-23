@@ -7,10 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "tarihiiznikfirinisales",
     "userInterfaceStyle": "automatic",
-    "androidNavigationBar": {
-      "backgroundColor": "#FFFFFF",
-      "barStyle": "dark-content"
-    },
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.tarihiiznikfirini.sales"

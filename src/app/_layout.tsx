@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { NavigationBar } from 'expo-navigation-bar';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -74,14 +75,17 @@ function AppContent() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <GluestackUIProvider mode="system">
-          <ErrorBoundary>
-            <AppContent />
-          </ErrorBoundary>
-        </GluestackUIProvider>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+    <>
+      <NavigationBar hidden />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <QueryClientProvider client={queryClient}>
+          <GluestackUIProvider mode="system">
+            <ErrorBoundary>
+              <AppContent />
+            </ErrorBoundary>
+          </GluestackUIProvider>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
+    </>
   );
 }

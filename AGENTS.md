@@ -41,6 +41,15 @@ text) are fine as `className`.
 - New gluestack components are copied into `src/components/ui/<name>/` (not
   installed as deps) and exported from `src/components/ui/index.ts`.
 
+# System navigation bar
+
+The Android system navigation bar is hidden (full-screen) via
+`expo-navigation-bar`'s declarative `<NavigationBar hidden />` in
+`src/app/_layout.tsx`. Do NOT add an `androidNavigationBar` block to `app.json`
+or set a nav bar background color — it reintroduces a mismatched strip at the
+bottom and pushes the app's bottom nav up. `react-native-safe-area-context`
+insets already handle the gesture area.
+
 # Theming (src/global.css)
 
 All colors are defined as CSS custom properties in `src/global.css`, in two
