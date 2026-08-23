@@ -13,7 +13,6 @@ import type {
   CreateDeliveryInput,
   CreateDistrictInput,
   DailySeriesResult,
-  Delivery,
   DeliveryWithBranch,
   DeliveryWithItems,
   District,
