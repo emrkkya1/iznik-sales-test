@@ -1,6 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Modal, Pressable } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
@@ -10,6 +8,7 @@ import { KeyboardAvoidingView } from '@/components/ui/keyboard-avoiding-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
 
 export type FormField =
   | {
@@ -43,7 +42,6 @@ type FormSheetProps = {
   title: string;
   fields: FormField[];
   submitLabel?: string;
-  cancelLabel?: string;
   onSubmit: (values: FormSheetValues) => Promise<void> | void;
   onCancel: () => void;
   initialValues?: FormSheetValues;
@@ -51,23 +49,23 @@ type FormSheetProps = {
   isSubmitting?: boolean;
 };
 
-// Generic bottom-anchored form sheet. Sheet content is wrapped in
-// KeyboardAvoidingView (Android: behavior="height" per SRS) so the Submit
+// Generic bottom-anchored form sheet.
+//
+// Uses the shared BottomSheet primitive for the chrome (header + Kapat +
+// safe-area + scrim). Body owns the form fields + server error + submit
+// button. The KeyboardAvoidingView wraps the field ScrollView so the Submit
 // button stays visible above the soft keyboard.
 export function FormSheet({
   open,
   title,
   fields,
   submitLabel = 'Kaydet',
-  cancelLabel = 'İptal',
   onSubmit,
   onCancel,
   initialValues,
   serverError,
   isSubmitting = false,
 }: FormSheetProps) {
-  const insets = useSafeAreaInsets();
-
   const seedValues = useMemo<FormSheetValues>(() => {
     const seed: FormSheetValues = {};
     for (const field of fields) {
@@ -85,9 +83,7 @@ export function FormSheet({
   const [values, setValues] = useState<FormSheetValues>(seedValues);
 
   // Reset values to fresh seeds whenever the sheet transitions from closed →
-  // open. Per React docs this is acceptable inside render: deriving state from
-  // current props avoids the cascading-render warning that `useEffect +
-  // setState` would produce.
+  // open. Per React docs this is acceptable inside render.
   const [wasOpen, setWasOpen] = useState(open);
   if (open && !wasOpen) {
     setWasOpen(true);
@@ -123,139 +119,110 @@ export function FormSheet({
   };
 
   return (
-    <Modal
-      transparent
-      visible={open}
-      animationType="slide"
-      onRequestClose={onCancel}
+    <BottomSheet
+      open={open}
+      title={title}
+      onClose={onCancel}
+      scrollable={false}
+      contentPadding={0}
     >
-      <Pressable
-        className="flex-1 items-center justify-end bg-black/50"
-        onPress={onCancel}
-      >
-        <KeyboardAvoidingView
-          behavior="height"
-          style={{ width: '100%' }}
+      <KeyboardAvoidingView behavior="height" style={{ width: '100%' }}>
+        <ScrollView
+          style={{ maxHeight: 480 }}
+          keyboardShouldPersistTaps="handled"
         >
-          <Pressable onPress={(e) => e.stopPropagation()}>
-            <Box
-              className="w-full rounded-t-2xl border-t border-border bg-card"
-              style={{ paddingBottom: Math.max(insets.bottom, 12) }}
-            >
-              <HStack className="items-center justify-between border-b border-border px-4 py-3">
-                <Button variant="ghost" size="sm" onPress={onCancel}>
-                  <ButtonText className="text-muted-foreground">
-                    {cancelLabel}
-                  </ButtonText>
-                </Button>
-                <Text size="lg" bold className="text-foreground">
-                  {title}
-                </Text>
-                <Box style={{ width: 60 }} />
-              </HStack>
+          <VStack space="md" className="p-4">
+            {fields.map((field) => {
+              if (field.type === 'boolean') {
+                const current = Boolean(values[field.name]);
+                return (
+                  <HStack
+                    key={field.name}
+                    className="items-center justify-between"
+                  >
+                    <Text size="md" className="text-foreground">
+                      {field.label}
+                    </Text>
+                    <HStack space="xs">
+                      <Button
+                        variant={current ? 'default' : 'outline'}
+                        size="sm"
+                        onPress={() =>
+                          setValues((v) => ({ ...v, [field.name]: true }))
+                        }
+                      >
+                        <ButtonText>Evet</ButtonText>
+                      </Button>
+                      <Button
+                        variant={!current ? 'default' : 'outline'}
+                        size="sm"
+                        onPress={() =>
+                          setValues((v) => ({ ...v, [field.name]: false }))
+                        }
+                      >
+                        <ButtonText>Hayır</ButtonText>
+                      </Button>
+                    </HStack>
+                  </HStack>
+                );
+              }
 
-              <ScrollView
-                style={{ maxHeight: 480 }}
-                keyboardShouldPersistTaps="handled"
-              >
-                <VStack space="md" className="p-4">
-                  {fields.map((field) => {
-                    if (field.type === 'boolean') {
-                      const current = Boolean(values[field.name]);
-                      return (
-                        <HStack
-                          key={field.name}
-                          className="items-center justify-between"
-                        >
-                          <Text size="md" className="text-foreground">
-                            {field.label}
-                          </Text>
-                          <HStack space="xs">
-                            <Button
-                              variant={current ? 'default' : 'outline'}
-                              size="sm"
-                              onPress={() =>
-                                setValues((v) => ({ ...v, [field.name]: true }))
-                              }
-                            >
-                              <ButtonText>Evet</ButtonText>
-                            </Button>
-                            <Button
-                              variant={!current ? 'default' : 'outline'}
-                              size="sm"
-                              onPress={() =>
-                                setValues((v) => ({ ...v, [field.name]: false }))
-                              }
-                            >
-                              <ButtonText>Hayır</ButtonText>
-                            </Button>
-                          </HStack>
-                        </HStack>
-                      );
-                    }
+              const raw = values[field.name];
+              const text = typeof raw === 'string' ? raw : '';
+              const error = validity.errors[field.name];
 
-                    const raw = values[field.name];
-                    const text = typeof raw === 'string' ? raw : '';
-                    const error = validity.errors[field.name];
-
-                    return (
-                      <VStack key={field.name} space="xs">
-                        <Text size="sm" className="text-foreground">
-                          {field.label}
-                          {field.required ? (
-                            <Text size="sm" className="text-destructive">
-                              {' *'}
-                            </Text>
-                          ) : null}
-                        </Text>
-                        <Input isInvalid={!!error}>
-                          <InputField
-                            value={text}
-                            onChangeText={(next) =>
-                              setValues((v) => ({ ...v, [field.name]: next }))
-                            }
-                            placeholder={field.placeholder}
-                            keyboardType={
-                              field.type === 'numeric' ? 'decimal-pad' : 'default'
-                            }
-                            autoCapitalize="sentences"
-                          />
-                        </Input>
-                        {error ? (
-                          <Text size="xs" className="text-destructive">
-                            {error}
-                          </Text>
-                        ) : null}
-                      </VStack>
-                    );
-                  })}
+              return (
+                <VStack key={field.name} space="xs">
+                  <Text size="sm" className="text-foreground">
+                    {field.label}
+                    {field.required ? (
+                      <Text size="sm" className="text-destructive">
+                        {' *'}
+                      </Text>
+                    ) : null}
+                  </Text>
+                  <Input isInvalid={!!error}>
+                    <InputField
+                      value={text}
+                      onChangeText={(next) =>
+                        setValues((v) => ({ ...v, [field.name]: next }))
+                      }
+                      placeholder={field.placeholder}
+                      keyboardType={
+                        field.type === 'numeric' ? 'decimal-pad' : 'default'
+                      }
+                      autoCapitalize="sentences"
+                    />
+                  </Input>
+                  {error ? (
+                    <Text size="xs" className="text-destructive">
+                      {error}
+                    </Text>
+                  ) : null}
                 </VStack>
-              </ScrollView>
+              );
+            })}
+          </VStack>
+        </ScrollView>
 
-              {serverError ? (
-                <Text
-                  size="sm"
-                  className="px-4 pb-2 text-destructive"
-                >
-                  {serverError}
-                </Text>
-              ) : null}
+        {serverError ? (
+          <Text size="sm" className="px-4 pb-2 text-destructive">
+            {serverError}
+          </Text>
+        ) : null}
 
-              <Box className="border-t border-border p-4">
-                <Button
-                  onPress={handleSubmit}
-                  disabled={!validity.isValid || isSubmitting}
-                  className="w-full"
-                >
-                  <ButtonText>
-                    {isSubmitting ? 'Kaydediliyor…' : submitLabel}
-                  </ButtonText>
-                </Button>
-              </Box>
-            </Box>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
-    </Modal>
+        <Box className="p-4">
+          <Button
+            onPress={handleSubmit}
+            disabled={!validity.isValid || isSubmitting}
+            className="w-full"
+          >
+            <ButtonText>
+              {isSubmitting ? 'Kaydediliyor…' : submitLabel}
+            </ButtonText>
+          </Button>
+        </Box>
+      </KeyboardAvoidingView>
+    </BottomSheet>
   );
 }

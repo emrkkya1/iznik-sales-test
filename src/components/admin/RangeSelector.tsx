@@ -23,7 +23,7 @@ type RangeSelectorProps = {
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {
   return (
     <Box
-      className="border-b border-border bg-card px-6 pt-2"
+      className="bg-card px-6 pt-2"
       style={{ marginBottom: 24 }}
     >
       <HStack

@@ -251,6 +251,7 @@ export interface BranchHubDetails {
   activeProductCount: number;
   totalProductCount: number;
   lastMovementDate: string | null;
+  auditCount: number;
 }
 
 // Inputs for geography create mutations
@@ -284,4 +285,34 @@ export interface BranchMovementRow {
 export interface BranchMovements {
   deliveries: BranchMovementRow[];
   payments: BranchMovementRow[];
+}
+
+// Branch product with per-branch activation status (from
+// list_branch_products_with_status RPC). Used by the Ürünler & Fiyatlar tab
+// to render both active (with price) and inactive ("+ Aktifleştir") items.
+export interface BranchProductWithStatus {
+  productId: string;
+  productName: string;
+  productImageUrl: string | null;
+  isActive: boolean;
+  branchProductId: string | null;
+  isActivatedForBranch: boolean;
+  currentPrice: number | null;
+}
+
+// Inputs for branch product mutations (PR-6.2)
+export interface SetBranchProductPriceInput {
+  branchProductId: string;
+  price: number;
+  effectiveFrom: string;
+}
+export interface SetBranchProductActiveInput {
+  branchProductId: string;
+  isActive: boolean;
+}
+export interface ActivateBranchProductInput {
+  branchId: string;
+  productId: string;
+  price: number;
+  effectiveFrom: string;
 }

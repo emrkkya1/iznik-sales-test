@@ -164,7 +164,19 @@ export function StaffHomeScreen() {
             <Text size="sm" className="text-muted-foreground">
               Yeni Bakiye
             </Text>
-            <Amount size="sm" bold value={receipt.newBalance} showSign />
+            <Amount
+              size="sm"
+              bold
+              value={receipt.newBalance}
+              showSign
+              tone={
+                receipt.newBalance > 0
+                  ? 'info'
+                  : receipt.newBalance < 0
+                    ? 'destructive'
+                    : 'default'
+              }
+            />
           </HStack>
         </VStack>
       </ResultState>

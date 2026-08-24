@@ -1,10 +1,12 @@
 import type {
+  ActivateBranchProductInput,
   AuthSession,
   Branch,
   BranchHubDetails,
   BranchLocation,
   BranchMovements,
   BranchProductWithPrice,
+  BranchProductWithStatus,
   BranchWithContext,
   City,
   CityWithCounts,
@@ -21,6 +23,8 @@ import type {
   ManualPaymentInput,
   Payment,
   ReceiptSummary,
+  SetBranchProductActiveInput,
+  SetBranchProductPriceInput,
   SummaryKpis,
   SummaryRange,
   UpdateDeliveryInput,
@@ -50,6 +54,11 @@ export interface ProductRepository {
     branchId: string,
     date: string,
   ): Promise<BranchProductWithPrice[]>;
+  // PR-6.2: Branch Hub Ürünler & Fiyatlar tab
+  listBranchProductsWithStatus(branchId: string): Promise<BranchProductWithStatus[]>;
+  setBranchProductPrice(input: SetBranchProductPriceInput): Promise<void>;
+  setBranchProductActive(input: SetBranchProductActiveInput): Promise<void>;
+  activateBranchProduct(input: ActivateBranchProductInput): Promise<string>;
 }
 
 export interface DeliveryRepository {

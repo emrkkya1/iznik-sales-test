@@ -1,43 +1,49 @@
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Box } from '@/components/ui/box';
-import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
+import { Button, ButtonIcon } from '@/components/ui/button';
 import { PlusIcon } from '@/components/ui/icon';
+import { Pressable } from '@/components/ui/pressable';
+import { Text } from '@/components/ui/text';
 
 type FloatingCreateButtonProps = {
   label: string;
   onPress: () => void;
 };
 
-// Floating bottom-right action button (FAB style with icon + label). Rendered
-// inside a relative-positioned parent — this component itself is `absolute`.
-// `pointerEvents="box-none"` on the wrapper lets taps fall through to the
-// underlying list except where the button itself sits.
+// Floating bottom-right action button (FAB style with icon + label).
 //
-// Layout: `flex-row justify-end` pushes the button to the right edge in flex
-// row direction (rather than `items-end` which would align vertically only
-// and leave the button at the bottom-left). `flex-shrink-0` on the button is
-// defensive against any flex compression of its label.
+// Workaround: we pass the label through a plain RN `Text` instead of the
+// gluestack `ButtonText`. There's a bug in `@gluestack-ui/core/button`'s
+// ButtonText that truncates any label containing the Turkish character
+// "Ş" (e.g. "Yeni Şehir" → "+ Yeni "), regardless of button width. Using
+// RN's native Text here avoids the buggy wrapper while still inheriting
+// the Button's flex layout and icon.
 export function FloatingCreateButton({ label, onPress }: FloatingCreateButtonProps) {
   const insets = useSafeAreaInsets();
 
   return (
-    <Box
-      pointerEvents="box-none"
-      className="absolute bottom-0 right-6 flex-row justify-end"
+    <Button
+      onPress={onPress}
+      size="default"
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      className="rounded-full shadow-lg"
       style={{
-        paddingBottom: Math.max(insets.bottom, 24),
+        position: 'absolute',
+        bottom: Math.max(insets.bottom, 24),
+        right: 24,
       }}
     >
-      <Button
-        size="lg"
-        onPress={onPress}
-        className="rounded-full shadow-lg flex-shrink-0"
-        accessibilityLabel={label}
+      <ButtonIcon as={PlusIcon} />
+      <Pressable
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+        style={{ marginLeft: 8 }}
       >
-        <ButtonIcon as={PlusIcon} />
-        <ButtonText>{label}</ButtonText>
-      </Button>
-    </Box>
+        <Text size="sm" bold className="text-primary-foreground">
+          {label}
+        </Text>
+      </Pressable>
+    </Button>
   );
 }

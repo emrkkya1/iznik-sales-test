@@ -6,6 +6,9 @@ type ActiveBadgeProps = {
 
 export function ActiveBadge({ isActive }: ActiveBadgeProps) {
   return (
-    <Badge variant={isActive ? 'success' : 'muted'} text={isActive ? 'Aktif' : 'Pasif'} />
+    <Badge
+      variant={isActive ? 'success' : 'inactive'}
+      text={isActive ? 'Aktif' : 'Pasif'}
+    />
   );
 }

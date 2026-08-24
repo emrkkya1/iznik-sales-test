@@ -21,6 +21,7 @@ export type {
   ManualPaymentInput,
   ReceiptSummary,
   BranchProductWithPrice,
+  BranchProductWithStatus,
   DeliveryWithItems,
   DeliveryWithBranch,
   DeliveryItemWithProduct,
@@ -38,6 +39,9 @@ export type {
   CreateBranchInput,
   BranchMovementRow,
   BranchMovements,
+  SetBranchProductPriceInput,
+  SetBranchProductActiveInput,
+  ActivateBranchProductInput,
 } from './domain.types';
 
 export type AuthSession = {

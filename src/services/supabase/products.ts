@@ -1,5 +1,11 @@
 import type { ProductRepository } from '@/services/contracts';
-import type { BranchProductWithPrice } from '@/types';
+import type {
+  ActivateBranchProductInput,
+  BranchProductWithPrice,
+  BranchProductWithStatus,
+  SetBranchProductActiveInput,
+  SetBranchProductPriceInput,
+} from '@/types';
 
 import { supabaseClient } from './supabaseClient';
 
@@ -64,5 +70,46 @@ export const supabaseProductRepository: ProductRepository = {
         };
       })
       .filter((item): item is BranchProductWithPrice => item !== null);
+  },
+
+  // PR-6.2 — Ürünler & Fiyatlar tab data source
+  async listBranchProductsWithStatus(branchId) {
+    const { data, error } = await supabaseClient.rpc(
+      'list_branch_products_with_status',
+      { p_branch_id: branchId },
+    );
+    if (error) throw error;
+    return (data ?? []) as unknown as BranchProductWithStatus[];
+  },
+
+  async setBranchProductPrice(input: SetBranchProductPriceInput) {
+    const { error } = await supabaseClient.rpc(
+      'set_branch_product_price_atomic',
+      {
+        p_branch_product_id: input.branchProductId,
+        p_new_price: input.price,
+        p_effective_from: input.effectiveFrom,
+      },
+    );
+    if (error) throw error;
+  },
+
+  async setBranchProductActive(input: SetBranchProductActiveInput) {
+    const { error } = await supabaseClient.rpc('set_branch_product_active', {
+      p_branch_product_id: input.branchProductId,
+      p_is_active: input.isActive,
+    });
+    if (error) throw error;
+  },
+
+  async activateBranchProduct(input: ActivateBranchProductInput) {
+    const { data, error } = await supabaseClient.rpc('activate_branch_product', {
+      p_branch_id: input.branchId,
+      p_product_id: input.productId,
+      p_new_price: input.price,
+      p_effective_from: input.effectiveFrom,
+    });
+    if (error) throw error;
+    return data as string;
   },
 };
