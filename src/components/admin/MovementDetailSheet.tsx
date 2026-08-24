@@ -11,6 +11,10 @@ import { formatDateForDisplay, formatDateTime } from '@/utils/dates';
 type MovementDetailSheetProps = {
   item: MovementRow | null;
   onClose: () => void;
+  // Optional override for the sheet header. Defaults to "Teslimat Detayı"
+  // for deliveries and "Tahsilat Detayı" for payments. Pass a custom title
+  // (e.g. the branch name) when the parent screens a multi-branch list.
+  title?: string;
 };
 
 const PAYMENT_TYPE_LABEL: Record<string, string> = {
@@ -33,16 +37,21 @@ const PAYMENT_TYPE_LABEL: Record<string, string> = {
 //
 // For deliveries, we lazy-fetch the full record via useDelivery(id) so the
 // individual product items (quantity × unit price) are visible.
-export function MovementDetailSheet({ item, onClose }: MovementDetailSheetProps) {
+export function MovementDetailSheet({
+  item,
+  onClose,
+  title: titleOverride,
+}: MovementDetailSheetProps) {
   const deliveryId =
     item?.kind === 'delivery' && !item.isDeleted ? item.id : null;
   const deliveryQuery = useDelivery(deliveryId);
 
-  const title = item
+  const defaultTitle = item
     ? item.kind === 'delivery'
       ? 'Teslimat Detayı'
       : 'Tahsilat Detayı'
     : '';
+  const title = titleOverride ?? defaultTitle;
 
   // Big amount follows the cash-flow convention ("+ means we got money"):
   //   Delivery  → NET = Alınan - Verilen. Positive on overpayment (cash

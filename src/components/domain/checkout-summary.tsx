@@ -9,7 +9,6 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import {
   formatCurrency,
-  getBalanceTone,
   getBranchBalanceDirection,
 } from '@/utils/formatters';
 import type { ReceiptPreview } from '@/utils/receiptPreview';
@@ -46,13 +45,23 @@ function resultingBalanceTone(value: number): 'info' | 'destructive' | 'default'
   return 'default';
 }
 
+// "Tutar" (products cost) is a receivable from the branch, not a cash
+// balance. Positive = branch owes us this much (Alacak). Negative = net
+// returns, we owe back (Borç). This is the inverse of `getBalanceTone`
+// which describes a cash-in-hand balance where positive = Borç.
+function requiredToneLabel(value: number): 'Alacak' | 'Borç' | null {
+  if (value > 0) return 'Alacak';
+  if (value < 0) return 'Borç';
+  return null;
+}
+
 export function CheckoutSummary({
   branchName,
   preview,
   paymentAmount,
   loadingBalance = false,
 }: CheckoutSummaryProps) {
-  const requiredTone = getBalanceTone(preview.requiredAmount);
+  const requiredLabel = requiredToneLabel(preview.requiredAmount);
   const balanceTone = resultingBalanceTone(preview.resultingBalance);
   const previousDirection = getBranchBalanceDirection(
     preview.previousBalance,
@@ -105,9 +114,9 @@ export function CheckoutSummary({
           <Row label="Tutar">
             <HStack space="sm" className="items-center">
               <Amount size="md" bold value={preview.requiredAmount} />
-              {requiredTone !== 'Bakiye' ? (
+              {requiredLabel ? (
                 <Text size="xs" className="text-muted-foreground">
-                  {requiredTone}
+                  {requiredLabel}
                 </Text>
               ) : null}
             </HStack>

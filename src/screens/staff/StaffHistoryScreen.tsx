@@ -2,20 +2,21 @@ import { useState } from 'react';
 import { FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { MovementDetailSheet } from '@/components/admin/MovementDetailSheet';
 import { Amount } from '@/components/ui/amount';
 import { Box } from '@/components/ui/box';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { HStack } from '@/components/ui/hstack';
-import { Icon, ChevronRightIcon } from '@/components/ui/icon';
+import { Icon, EditIcon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useMyDeliveries } from '@/hooks';
 import { useReceiptDraftStore } from '@/store/receiptDraft';
-import type { DeliveryWithBranch } from '@/types';
+import type { DeliveryWithBranch, MovementRow } from '@/types';
 import { canEditDelivery } from '@/utils/dates';
 
 function formatTime(iso: string): string {
@@ -25,15 +26,34 @@ function formatTime(iso: string): string {
   }).format(new Date(iso));
 }
 
+// Adapt a staff DeliveryWithBranch row into the MovementRow shape the
+// shared MovementDetailSheet consumes. The list query doesn't include the
+// embedded payment, so payment is left null — the sheet still lazy-loads
+// the full delivery via useDelivery(id) and shows products + payment
+// details inside.
+function toMovementRow(d: DeliveryWithBranch): MovementRow {
+  return {
+    kind: 'delivery',
+    id: d.id,
+    date: d.date,
+    amount: d.totalSalesAmount,
+    isDeleted: d.deletedAt !== null,
+    createdAt: d.createdAt,
+    payment: null,
+  };
+}
+
 export function StaffHistoryScreen() {
   const router = useRouter();
   const deliveries = useMyDeliveries();
   const setEditingDeliveryId = useReceiptDraftStore(
     (s) => s.setEditingDeliveryId,
   );
+  const [selected, setSelected] = useState<DeliveryWithBranch | null>(null);
   const [pending, setPending] = useState<DeliveryWithBranch | null>(null);
 
   const startEdit = (delivery: DeliveryWithBranch) => {
+    setSelected(null);
     setPending(null);
     setEditingDeliveryId(delivery.id);
     router.push('/home');
@@ -77,9 +97,9 @@ export function StaffHistoryScreen() {
           const editable = canEditDelivery(item.date);
           return (
             <Pressable
-              onPress={editable ? () => setPending(item) : undefined}
-              disabled={!editable}
-              accessibilityRole={editable ? 'button' : undefined}
+              onPress={() => setSelected(item)}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.branchName} detayı`}
               className="flex-row items-center justify-between border-b border-border py-4"
             >
               <VStack space="xs" className="flex-1 pr-3">
@@ -109,18 +129,38 @@ export function StaffHistoryScreen() {
               </VStack>
 
               <HStack space="sm" className="items-center">
-                <Amount size="md" bold value={item.totalSalesAmount} />
+                <Amount size="sm" value={item.totalSalesAmount} />
                 {editable ? (
-                  <Icon
-                    as={ChevronRightIcon}
-                    size="md"
-                    className="text-muted-foreground"
-                  />
+                  // Inner Pressable with stopPropagation so tapping the
+                  // chevron opens the ConfirmDialog instead of also
+                  // opening the sheet behind it.
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      setPending(item);
+                    }}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Kaydı düzenle"
+                    className="items-center justify-center rounded-md p-1"
+                  >
+                    <Icon
+                      as={EditIcon}
+                      size="md"
+                      className="text-muted-foreground"
+                    />
+                  </Pressable>
                 ) : null}
               </HStack>
             </Pressable>
           );
         }}
+      />
+
+      <MovementDetailSheet
+        item={selected ? toMovementRow(selected) : null}
+        title={selected?.branchName}
+        onClose={() => setSelected(null)}
       />
 
       <ConfirmDialog
