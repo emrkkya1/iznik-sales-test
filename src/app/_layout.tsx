@@ -80,7 +80,11 @@ export default function RootLayout() {
   return (
     <>
       <NavigationBar hidden />
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* GestureHandlerRootView is a third-party wrapper. Inline
+          backgroundColor mirrors the --background token (255 255 255)
+          in src/global.css as a defensive measure; the rest of the app
+          uses `bg-background`. */}
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
         <QueryClientProvider client={queryClient}>
           <GluestackUIProvider mode="system">
             <ErrorBoundary>

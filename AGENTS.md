@@ -50,6 +50,20 @@ or set a nav bar background color — it reintroduces a mismatched strip at the
 bottom and pushes the app's bottom nav up. `react-native-safe-area-context`
 insets already handle the gesture area.
 
+# Query / mutation logging
+
+Every React Query `queryFn` and every mutation must be wrapped with
+`instrumentQuery` (queries) or call `logMutation` (mutations) from
+`src/utils/logger.ts`. The `query:<name>` / `mutation:<name>` lines in
+the Metro terminal are the only signal when a backend call fails — an
+unwrapped query fails silently in the UI (e.g. "Hareketler Yüklenemedi"
+with no logs).
+
+- **Queries:** wrap with `instrumentQuery('<snake_case_rpc_name>', async (ctx) => { ... }, summarizeResult)`. The wrapper logs `fetch` (with `pageParam` if present), `success` (with summarized payload), and `error` (full error).
+- **Mutations:** add explicit `logMutation('<name>', 'start', { ...input })`, `logMutation('<name>', 'success', { ... })`, and `logMutation('<name>', 'error', error)` in `onMutate` / `onSuccess` / `onError`.
+- RPC names are snake_case to match the server.
+- Treat this as a PR-blocking rule: a query without `instrumentQuery` means a future bug ships with no diagnostics.
+
 # Theming (src/global.css)
 
 All colors are defined as CSS custom properties in `src/global.css`, in two
