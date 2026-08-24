@@ -271,21 +271,47 @@ export interface CreateBranchInput {
   isActive: boolean;
 }
 
-// Branch movement entry (from list_branch_movements RPC)
-export interface BranchMovementRow {
+// Branch movement entry (from list_deliveries_with_payments RPC)
+//
+// Each row is either a delivery with its first active payment embedded
+// (or null if none), or a standalone manual payment (delivery_id IS NULL).
+// Sort order is (date DESC, created_at DESC) and pagination is global,
+// applied after the union — so a delivery and its linked payment count
+// as one row, and manual payments remain visible as separate rows.
+
+// Embedded payment fields returned alongside a delivery row.
+export interface PaymentEmbed {
   id: string;
-  type: 'delivery' | 'payment';
-  date: string;
   amount: number;
   paymentType: string | null;
-  isDeleted: boolean;
   createdAt: string;
 }
 
-export interface BranchMovements {
-  deliveries: BranchMovementRow[];
-  payments: BranchMovementRow[];
+// A delivery with its first active payment embedded.
+export interface DeliveryWithPayment {
+  kind: 'delivery';
+  id: string;
+  date: string;
+  amount: number;
+  isDeleted: boolean;
+  createdAt: string;
+  payment: PaymentEmbed | null;
 }
+
+// A standalone payment (delivery_id IS NULL) — bank_transfer /
+// field_collection recorded directly against the branch.
+export interface ManualPayment {
+  kind: 'payment';
+  id: string;
+  date: string;
+  amount: number;
+  isDeleted: boolean;
+  createdAt: string;
+  paymentType: string | null;
+}
+
+// What the MovementsTab iterates over and the sheet accepts.
+export type MovementRow = DeliveryWithPayment | ManualPayment;
 
 // Branch product with per-branch activation status (from
 // list_branch_products_with_status RPC). Used by the Ürünler & Fiyatlar tab
