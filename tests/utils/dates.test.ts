@@ -4,6 +4,7 @@ import {
   getIstanbulToday,
   canEditDelivery,
   formatDateForDisplay,
+  formatDateTime,
   parseIsoDate,
   formatIsoDate,
 } from '@/utils/dates';
@@ -72,5 +73,42 @@ describe('parseIsoDate / formatIsoDate', () => {
 
   it('round-trips a year boundary', () => {
     expect(formatIsoDate(parseIsoDate('2023-12-31'))).toBe('2023-12-31');
+  });
+});
+
+describe('formatDateTime', () => {
+  it('strips fractional seconds from a Supabase-style timestamp', () => {
+    const formatted = formatDateTime('2026-08-22T13:52:04.356532+00');
+    expect(formatted).toMatch(/13:52:04/);
+    expect(formatted).not.toMatch(/\.356532/);
+  });
+
+  it('strips the timezone designator', () => {
+    const formatted = formatDateTime('2026-08-22T13:52:04+03:00');
+    expect(formatted).not.toMatch(/03:00/);
+    expect(formatted).toMatch(/13:52:04/);
+  });
+
+  it('handles a timestamp with milliseconds but no explicit timezone', () => {
+    const formatted = formatDateTime('2026-08-22T13:52:04.123');
+    expect(formatted).toMatch(/13:52:04/);
+    expect(formatted).not.toMatch(/\.123/);
+  });
+
+  it('handles a timestamp without milliseconds', () => {
+    const formatted = formatDateTime('2026-08-22T13:52:04Z');
+    expect(formatted).toMatch(/13:52:04/);
+  });
+
+  it('returns just the formatted date when there is no time component', () => {
+    const formatted = formatDateTime('2026-08-22');
+    expect(formatted).toMatch(/22/);
+    expect(formatted).toMatch(/08/);
+    expect(formatted).toMatch(/2026/);
+    expect(formatted).not.toMatch(/:/);
+  });
+
+  it('returns empty string for empty input', () => {
+    expect(formatDateTime('')).toBe('');
   });
 });

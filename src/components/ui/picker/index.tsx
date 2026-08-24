@@ -38,6 +38,13 @@ type PickerProps = {
 
 const MAX_ITEM_WIDTH = 280;
 
+// Brand tokens (mirror src/global.css). Kept inline so the pill renders
+// reliably without depending on NativeWind v5 class resolution at this
+// nested level.
+const PRIMARY = '#6A4715';
+const PRIMARY_FOREGROUND = '#FFFCF7';
+const MUTED_FOREGROUND = '#85653D';
+
 export function Picker({
   items,
   value,
@@ -127,10 +134,15 @@ export function Picker({
       );
       if (index >= 0) {
         const item = items[index];
-        if (item && !item.disabled) onChange(item.id);
+        // Skip when the settled item already matches `value`. Programmatic
+        // value-sync scrolls (e.g. edit prefill, parent reset) land on the
+        // selected item; re-emitting onChange there would cascade-reset
+        // dependent values in callers like BranchSelector and clobber the
+        // prefilled draft.
+        if (item && !item.disabled && item.id !== value) onChange(item.id);
       }
     },
-    [items, onChange],
+    [items, onChange, value],
   );
 
   const handlePress = useCallback(
@@ -138,10 +150,11 @@ export function Picker({
       if (disabled) return;
       const item = items[index];
       if (!item || item.disabled) return;
+      if (item.id === value) return;
       scrollToIndex(index);
       onChange(item.id);
     },
-    [disabled, items, onChange, scrollToIndex],
+    [disabled, items, onChange, scrollToIndex, value],
   );
 
   const leadingPadding = allMeasured
@@ -157,7 +170,7 @@ export function Picker({
       ) : null}
 
       <Box
-        className={disabled ? 'opacity-50' : undefined}
+        className={`bg-background ${disabled ? 'opacity-50' : ''}`}
         pointerEvents={disabled ? 'none' : 'auto'}
       >
         {loading ? (
@@ -171,6 +184,8 @@ export function Picker({
             </Text>
           </Box>
         ) : (
+          // ScrollView is a native RN component (no NativeWind className
+          // support); inline backgroundColor mirrors --background.
           <ScrollView
             ref={scrollRef}
             horizontal
@@ -179,6 +194,7 @@ export function Picker({
             snapToOffsets={snapOffsets.length ? snapOffsets : undefined}
             onLayout={handleContainerLayout}
             onMomentumScrollEnd={handleScrollEnd}
+            style={{ backgroundColor: '#FFFFFF' }}
             contentContainerStyle={{ paddingHorizontal: leadingPadding }}
           >
             {items.map((item, index) => {
@@ -192,18 +208,21 @@ export function Picker({
                   disabled={item.disabled}
                   className={`h-16 items-center justify-center border-r border-border px-3 ${
                     isLast ? 'border-r-0' : ''
-                  } ${selected ? 'bg-primary' : 'bg-transparent'}`}
+                  }`}
                 >
                   <Text
                     size={pickerFontSize(item.label)}
                     bold={selected}
                     numberOfLines={2}
-                    style={{ maxWidth: MAX_ITEM_WIDTH - 24 }}
-                    className={`text-center ${
-                      selected
-                        ? 'text-primary-foreground'
-                        : 'text-muted-foreground'
-                    }`}
+                    style={{
+                      maxWidth: MAX_ITEM_WIDTH - 24,
+                      backgroundColor: selected ? PRIMARY : 'transparent',
+                      color: selected ? PRIMARY_FOREGROUND : MUTED_FOREGROUND,
+                      borderRadius: 10,
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      overflow: 'hidden',
+                    }}
                   >
                     {item.label}
                   </Text>

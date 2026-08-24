@@ -42,22 +42,33 @@ export function logQuery(
 // Wraps a queryFn so every fetch logs fetch/success/error with a bounded
 // payload. Use this from React Query hooks to get consistent terminal
 // diagnostics without each hook having to repeat the try/catch dance.
-export function instrumentQuery<T>(
+//
+// The generic preserves the queryFn's full signature, so the same helper
+// covers `useQuery` (no args), `useInfiniteQuery` (with `{ pageParam }`),
+// and any other arity — the wrapper forwards every argument unchanged.
+export function instrumentQuery<TFn extends (...args: any[]) => Promise<any>>(
   name: string,
-  fn: () => Promise<T>,
-  summarize?: (result: T) => unknown,
-): () => Promise<T> {
-  return async () => {
-    logQuery(name, 'fetch');
+  fn: TFn,
+  summarize?: (result: Awaited<ReturnType<TFn>>) => unknown,
+): TFn {
+  return (async (...args: Parameters<TFn>) => {
+    const ctx = args[0] as { pageParam?: unknown } | undefined;
+    logQuery(
+      name,
+      'fetch',
+      ctx && ctx.pageParam !== undefined
+        ? { pageParam: ctx.pageParam }
+        : undefined,
+    );
     try {
-      const result = await fn();
+      const result = await fn(...args);
       logQuery(name, 'success', summarize ? summarize(result) : undefined);
       return result;
     } catch (error) {
       logQuery(name, 'error', error);
       throw error;
     }
-  };
+  }) as TFn;
 }
 
 // Compact payload summarizer for hooks that fetch arrays or RPC payloads.

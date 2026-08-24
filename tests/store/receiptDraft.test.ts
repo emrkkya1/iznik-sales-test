@@ -9,7 +9,7 @@ function resetStore() {
     districtId: null,
     branchId: null,
     date: getIstanbulToday(),
-    quantities: {},
+    entries: {},
     paymentAmount: 0,
     isSubmitting: false,
     editingDeliveryId: null,
@@ -28,57 +28,96 @@ describe('receiptDraft store', () => {
     expect(s.cityId).toBeNull();
     expect(s.districtId).toBeNull();
     expect(s.branchId).toBeNull();
-    expect(s.quantities).toEqual({});
+    expect(s.entries).toEqual({});
     expect(s.paymentAmount).toBe(0);
     expect(s.isSubmitting).toBe(false);
     expect(s.editingDeliveryId).toBeNull();
     expect(s.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  it('setQuantity adds, updates and removes entries', () => {
+  it('setDelivered adds, updates and removes entries when both counts reach 0', () => {
     const store = useReceiptDraftStore.getState();
 
-    store.setQuantity('p1', 5);
-    expect(useReceiptDraftStore.getState().quantities).toEqual({ p1: 5 });
+    store.setDelivered('p1', 5);
+    expect(useReceiptDraftStore.getState().entries).toEqual({
+      p1: { delivered: 5, returned: 0 },
+    });
 
-    store.setQuantity('p1', 0);
-    expect(useReceiptDraftStore.getState().quantities).toEqual({});
+    store.setDelivered('p1', 0);
+    expect(useReceiptDraftStore.getState().entries).toEqual({});
   });
 
-  it('applyPath clears quantities when the branch changes', () => {
+  it('setDelivered keeps entry when returned > 0', () => {
     const store = useReceiptDraftStore.getState();
-    store.setQuantity('p1', 5);
+    store.setReturned('p1', 3);
+    store.setDelivered('p1', 0);
+
+    expect(useReceiptDraftStore.getState().entries).toEqual({
+      p1: { delivered: 0, returned: 3 },
+    });
+  });
+
+  it('setReturned updates only the returned field', () => {
+    const store = useReceiptDraftStore.getState();
+    store.setDelivered('p1', 5);
+    store.setReturned('p1', 2);
+
+    expect(useReceiptDraftStore.getState().entries).toEqual({
+      p1: { delivered: 5, returned: 2 },
+    });
+  });
+
+  it('setEntries drops zero entries and clamps negatives', () => {
+    const store = useReceiptDraftStore.getState();
+
+    store.setEntries({
+      p1: { delivered: 5, returned: 1 },
+      p2: { delivered: 0, returned: 0 },
+      p3: { delivered: -3, returned: 4 },
+    });
+
+    expect(useReceiptDraftStore.getState().entries).toEqual({
+      p1: { delivered: 5, returned: 1 },
+      p3: { delivered: 0, returned: 4 },
+    });
+  });
+
+  it('applyPath clears entries when the branch changes', () => {
+    const store = useReceiptDraftStore.getState();
+    store.setDelivered('p1', 5);
 
     store.applyPath({ cityId: 'c1', districtId: 'd1', branchId: 'b1' });
 
     expect(useReceiptDraftStore.getState().branchId).toBe('b1');
-    expect(useReceiptDraftStore.getState().quantities).toEqual({});
+    expect(useReceiptDraftStore.getState().entries).toEqual({});
   });
 
-  it('applyPath keeps quantities when the branch is unchanged', () => {
+  it('applyPath keeps entries when the branch is unchanged', () => {
     const store = useReceiptDraftStore.getState();
     store.applyPath({ cityId: 'c1', districtId: 'd1', branchId: 'b1' });
-    store.setQuantity('p1', 5);
+    store.setDelivered('p1', 5);
 
     store.applyPath({ cityId: 'c2', districtId: 'd1', branchId: 'b1' });
 
-    expect(useReceiptDraftStore.getState().quantities).toEqual({ p1: 5 });
+    expect(useReceiptDraftStore.getState().entries).toEqual({
+      p1: { delivered: 5, returned: 0 },
+    });
   });
 
-  it('setDate clears quantities', () => {
+  it('setDate clears entries', () => {
     const store = useReceiptDraftStore.getState();
-    store.setQuantity('p1', 5);
+    store.setDelivered('p1', 5);
 
     store.setDate('2024-01-01');
 
     expect(useReceiptDraftStore.getState().date).toBe('2024-01-01');
-    expect(useReceiptDraftStore.getState().quantities).toEqual({});
+    expect(useReceiptDraftStore.getState().entries).toEqual({});
   });
 
   it('reset clears everything including the editing id', () => {
     const store = useReceiptDraftStore.getState();
     store.applyPath({ cityId: 'c1', districtId: 'd1', branchId: 'b1' });
-    store.setQuantity('p1', 5);
+    store.setDelivered('p1', 5);
     store.setPaymentAmount(120);
     store.setEditingDeliveryId('delivery-1');
 
@@ -86,7 +125,7 @@ describe('receiptDraft store', () => {
 
     const s = useReceiptDraftStore.getState();
     expect(s.branchId).toBeNull();
-    expect(s.quantities).toEqual({});
+    expect(s.entries).toEqual({});
     expect(s.paymentAmount).toBe(0);
     expect(s.editingDeliveryId).toBeNull();
   });
@@ -111,7 +150,7 @@ describe('receiptDraft store', () => {
     const store = useReceiptDraftStore.getState();
     store.applyPath({ cityId: 'c1', districtId: 'd1', branchId: 'b1' });
     store.setDate('2024-03-15');
-    store.setQuantity('p1', 5);
+    store.setDelivered('p1', 5);
     store.setPaymentAmount(120);
     store.rememberLast();
 
@@ -122,8 +161,34 @@ describe('receiptDraft store', () => {
     expect(s.districtId).toBe('d1');
     expect(s.branchId).toBe('b1');
     expect(s.date).toBe('2024-03-15');
-    expect(s.quantities).toEqual({});
+    expect(s.entries).toEqual({});
     expect(s.paymentAmount).toBe(0);
     expect(s.editingDeliveryId).toBeNull();
+  });
+
+  it('clear wipes the working draft but preserves lastPath and lastDate', () => {
+    const store = useReceiptDraftStore.getState();
+    store.applyPath({ cityId: 'c1', districtId: 'd1', branchId: 'b1' });
+    store.setDate('2024-03-15');
+    store.setDelivered('p1', 5);
+    store.setPaymentAmount(120);
+    store.setEditingDeliveryId('delivery-1');
+    store.rememberLast();
+
+    store.clear();
+
+    const s = useReceiptDraftStore.getState();
+    expect(s.cityId).toBeNull();
+    expect(s.districtId).toBeNull();
+    expect(s.branchId).toBeNull();
+    expect(s.entries).toEqual({});
+    expect(s.paymentAmount).toBe(0);
+    expect(s.editingDeliveryId).toBeNull();
+    expect(s.lastPath).toEqual({
+      cityId: 'c1',
+      districtId: 'd1',
+      branchId: 'b1',
+    });
+    expect(s.lastDate).toBe('2024-03-15');
   });
 });

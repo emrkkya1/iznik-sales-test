@@ -86,3 +86,17 @@ export function formatIsoDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+// Formats a Supabase-style ISO timestamp ("YYYY-MM-DDTHH:mm:ss[.fff](Z|±HH:MM)")
+// as `<display-date> HH:mm:ss` for UI. The fractional seconds and the trailing
+// timezone designator are stripped — the date comes from `formatDateForDisplay`
+// (already tr-TR localized) and the time is fixed-width hh:mm:ss.
+export function formatDateTime(iso: string): string {
+  if (!iso) return '';
+  const [datePart, timePart] = iso.split('T');
+  const date = formatDateForDisplay(datePart ?? iso);
+  if (!timePart) return date;
+  const hhmm = timePart.split(/[+\-Z]/)[0] ?? '';
+  const timeOnly = hhmm.split('.')[0];
+  return timeOnly ? `${date} ${timeOnly}` : date;
+}

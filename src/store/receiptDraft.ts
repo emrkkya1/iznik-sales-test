@@ -8,12 +8,17 @@ export type BranchPath = {
   branchId: string | null;
 };
 
+export type DraftEntry = {
+  delivered: number;
+  returned: number;
+};
+
 type ReceiptDraftState = {
   cityId: string | null;
   districtId: string | null;
   branchId: string | null;
   date: string;
-  quantities: Record<string, number>;
+  entries: Record<string, DraftEntry>;
   paymentAmount: number;
   isSubmitting: boolean;
   editingDeliveryId: string | null;
@@ -21,13 +26,15 @@ type ReceiptDraftState = {
   lastDate: string;
   applyPath: (path: BranchPath) => void;
   setDate: (date: string) => void;
-  setQuantity: (productId: string, quantity: number) => void;
-  setQuantities: (quantities: Record<string, number>) => void;
+  setDelivered: (productId: string, quantity: number) => void;
+  setReturned: (productId: string, quantity: number) => void;
+  setEntries: (entries: Record<string, DraftEntry>) => void;
   setPaymentAmount: (amount: number) => void;
   setSubmitting: (submitting: boolean) => void;
   setEditingDeliveryId: (id: string | null) => void;
   rememberLast: () => void;
   reset: () => void;
+  clear: () => void;
 };
 
 const EMPTY_PATH: BranchPath = {
@@ -42,7 +49,7 @@ function initialState() {
     districtId: null as string | null,
     branchId: null as string | null,
     date: getIstanbulToday(),
-    quantities: {} as Record<string, number>,
+    entries: {} as Record<string, DraftEntry>,
     paymentAmount: 0,
     isSubmitting: false,
     editingDeliveryId: null as string | null,
@@ -51,26 +58,55 @@ function initialState() {
   };
 }
 
+function isEmpty(entry: DraftEntry): boolean {
+  return entry.delivered <= 0 && entry.returned <= 0;
+}
+
 export const useReceiptDraftStore = create<ReceiptDraftState>((set) => ({
   ...initialState(),
   applyPath: (path) =>
     set((state) => ({
       ...path,
-      quantities:
-        path.branchId !== state.branchId ? {} : state.quantities,
+      entries: path.branchId !== state.branchId ? {} : state.entries,
     })),
-  setDate: (date) => set({ date, quantities: {} }),
-  setQuantity: (productId, quantity) =>
+  setDate: (date) => set({ date, entries: {} }),
+  setDelivered: (productId, quantity) =>
     set((state) => {
-      const quantities = { ...state.quantities };
-      if (quantity <= 0) {
-        delete quantities[productId];
+      const next = Math.max(0, quantity);
+      const entries = { ...state.entries };
+      const current = entries[productId] ?? { delivered: 0, returned: 0 };
+      const updated: DraftEntry = { ...current, delivered: next };
+      if (isEmpty(updated)) {
+        delete entries[productId];
       } else {
-        quantities[productId] = quantity;
+        entries[productId] = updated;
       }
-      return { quantities };
+      return { entries };
     }),
-  setQuantities: (quantities) => set({ quantities }),
+  setReturned: (productId, quantity) =>
+    set((state) => {
+      const next = Math.max(0, quantity);
+      const entries = { ...state.entries };
+      const current = entries[productId] ?? { delivered: 0, returned: 0 };
+      const updated: DraftEntry = { ...current, returned: next };
+      if (isEmpty(updated)) {
+        delete entries[productId];
+      } else {
+        entries[productId] = updated;
+      }
+      return { entries };
+    }),
+  setEntries: (entries) => {
+    const cleaned: Record<string, DraftEntry> = {};
+    for (const [productId, entry] of Object.entries(entries)) {
+      const delivered = Math.max(0, entry.delivered ?? 0);
+      const returned = Math.max(0, entry.returned ?? 0);
+      if (delivered > 0 || returned > 0) {
+        cleaned[productId] = { delivered, returned };
+      }
+    }
+    set({ entries: cleaned });
+  },
   setPaymentAmount: (paymentAmount) => set({ paymentAmount }),
   setSubmitting: (isSubmitting) => set({ isSubmitting }),
   setEditingDeliveryId: (editingDeliveryId) => set({ editingDeliveryId }),
@@ -90,6 +126,12 @@ export const useReceiptDraftStore = create<ReceiptDraftState>((set) => ({
       districtId: state.lastPath.districtId,
       branchId: state.lastPath.branchId,
       date: state.lastDate,
+      lastPath: state.lastPath,
+      lastDate: state.lastDate,
+    })),
+  clear: () =>
+    set((state) => ({
+      ...initialState(),
       lastPath: state.lastPath,
       lastDate: state.lastDate,
     })),
