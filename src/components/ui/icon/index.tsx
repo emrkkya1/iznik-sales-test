@@ -477,3 +477,17 @@ const EditIcon = createIcon({
 });
 EditIcon.displayName = 'EditIcon';
 export { EditIcon };
+
+const MoreVerticalIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Circle cx="12" cy="12" r="1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="12" cy="5" r="1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="12" cy="19" r="1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+MoreVerticalIcon.displayName = 'MoreVerticalIcon';
+export { MoreVerticalIcon };

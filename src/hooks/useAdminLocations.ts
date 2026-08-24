@@ -12,6 +12,7 @@ import type {
   CreateCityInput,
   CreateDistrictInput,
 } from '@/types';
+import { instrumentQuery, logMutation, summarizeResult } from '@/utils/logger';
 
 import { useBranchBalance } from './useLedger';
 
@@ -23,7 +24,11 @@ const TRANSACTIONAL_STALE_MS = 60_000;
 export function useCitiesWithCounts() {
   return useQuery({
     queryKey: ['admin', 'cities', 'with-counts'],
-    queryFn: () => services.adminLocations.listCitiesWithCounts(),
+    queryFn: instrumentQuery(
+      'list_cities_with_counts',
+      () => services.adminLocations.listCitiesWithCounts(),
+      summarizeResult,
+    ),
     staleTime: REFERENCE_STALE_MS,
     placeholderData: keepPreviousData,
   });
@@ -32,7 +37,11 @@ export function useCitiesWithCounts() {
 export function useDistrictsWithCounts(cityId: string | null) {
   return useQuery({
     queryKey: ['admin', 'districts', 'with-counts', cityId],
-    queryFn: () => services.adminLocations.listDistrictsWithCounts(cityId as string),
+    queryFn: instrumentQuery(
+      'list_districts_with_counts',
+      () => services.adminLocations.listDistrictsWithCounts(cityId as string),
+      summarizeResult,
+    ),
     enabled: !!cityId,
     staleTime: REFERENCE_STALE_MS,
     placeholderData: keepPreviousData,
@@ -42,8 +51,12 @@ export function useDistrictsWithCounts(cityId: string | null) {
 export function useBranchesWithContext(districtId: string | null) {
   return useQuery({
     queryKey: ['admin', 'branches', 'with-context', districtId],
-    queryFn: () =>
-      services.adminLocations.listBranchesWithContext(districtId as string),
+    queryFn: instrumentQuery(
+      'list_branches_with_context',
+      () =>
+        services.adminLocations.listBranchesWithContext(districtId as string),
+      summarizeResult,
+    ),
     enabled: !!districtId,
     staleTime: TRANSACTIONAL_STALE_MS,
     placeholderData: keepPreviousData,
@@ -53,7 +66,10 @@ export function useBranchesWithContext(districtId: string | null) {
 export function useOpeningBalancesLocked() {
   return useQuery({
     queryKey: ['admin', 'app-config', 'opening-balances-locked'],
-    queryFn: () => services.adminLocations.getOpeningBalancesLocked(),
+    queryFn: instrumentQuery(
+      'get_opening_balances_locked',
+      () => services.adminLocations.getOpeningBalancesLocked(),
+    ),
     staleTime: TRANSACTIONAL_STALE_MS,
     placeholderData: keepPreviousData,
   });
@@ -62,8 +78,10 @@ export function useOpeningBalancesLocked() {
 export function useBranchHubDetails(branchId: string | null | undefined) {
   return useQuery({
     queryKey: ['admin', 'branch-hub', 'details', branchId],
-    queryFn: () =>
-      services.adminLocations.getBranchHubDetails(branchId as string),
+    queryFn: instrumentQuery(
+      'get_branch_hub_details',
+      () => services.adminLocations.getBranchHubDetails(branchId as string),
+    ),
     enabled: !!branchId,
     staleTime: TRANSACTIONAL_STALE_MS,
     placeholderData: keepPreviousData,
@@ -77,12 +95,16 @@ export function useBranchMovements(
 ) {
   return useQuery({
     queryKey: ['admin', 'branch-movements', branchId, limit, offset],
-    queryFn: () =>
-      services.adminLocations.listBranchMovements(
-        branchId as string,
-        limit,
-        offset,
-      ),
+    queryFn: instrumentQuery(
+      'list_branch_movements',
+      () =>
+        services.adminLocations.listBranchMovements(
+          branchId as string,
+          limit,
+          offset,
+        ),
+      summarizeResult,
+    ),
     enabled: !!branchId,
     staleTime: TRANSACTIONAL_STALE_MS,
     placeholderData: keepPreviousData,
@@ -155,9 +177,12 @@ export function useCreateCity() {
   return useMutation({
     mutationFn: (input: CreateCityInput) =>
       services.adminLocations.createCity(input),
-    onSuccess: () => {
+    onMutate: (input) => logMutation('create_city', 'start', { input }),
+    onSuccess: (data) => {
+      logMutation('create_city', 'success', { id: data.id });
       invalidateCities(queryClient);
     },
+    onError: (error) => logMutation('create_city', 'error', error),
   });
 }
 
@@ -166,9 +191,12 @@ export function useCreateDistrict() {
   return useMutation({
     mutationFn: (input: CreateDistrictInput) =>
       services.adminLocations.createDistrict(input),
-    onSuccess: (_data, variables) => {
+    onMutate: (input) => logMutation('create_district', 'start', { input }),
+    onSuccess: (data, variables) => {
+      logMutation('create_district', 'success', { id: data.id });
       invalidateDistricts(queryClient, variables.cityId);
     },
+    onError: (error) => logMutation('create_district', 'error', error),
   });
 }
 
@@ -177,9 +205,12 @@ export function useCreateBranch() {
   return useMutation({
     mutationFn: (input: CreateBranchInput) =>
       services.adminLocations.createBranch(input),
-    onSuccess: (_data, variables) => {
+    onMutate: (input) => logMutation('create_branch', 'start', { input }),
+    onSuccess: (data, variables) => {
+      logMutation('create_branch', 'success', { id: data.id });
       invalidateBranches(queryClient, variables.districtId);
     },
+    onError: (error) => logMutation('create_branch', 'error', error),
   });
 }
 
@@ -188,9 +219,12 @@ export function useSetCityActive() {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       services.adminLocations.setCityActive(id, isActive),
-    onSuccess: () => {
+    onMutate: (vars) => logMutation('set_city_active', 'start', vars),
+    onSuccess: (_data, vars) => {
+      logMutation('set_city_active', 'success', { id: vars.id });
       invalidateCities(queryClient);
     },
+    onError: (error) => logMutation('set_city_active', 'error', error),
   });
 }
 
@@ -199,10 +233,13 @@ export function useSetDistrictActive() {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       services.adminLocations.setDistrictActive(id, isActive),
-    onSuccess: () => {
+    onMutate: (vars) => logMutation('set_district_active', 'start', vars),
+    onSuccess: (_data, vars) => {
+      logMutation('set_district_active', 'success', { id: vars.id });
       queryClient.invalidateQueries({ queryKey: ['admin', 'districts'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'cities'] });
     },
+    onError: (error) => logMutation('set_district_active', 'error', error),
   });
 }
 
@@ -211,15 +248,16 @@ export function useSetBranchActive() {
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       services.adminLocations.setBranchActive(id, isActive),
-    onSuccess: (_data, variables) => {
+    onMutate: (vars) => logMutation('set_branch_active', 'start', vars),
+    onSuccess: (_data, vars) => {
+      logMutation('set_branch_active', 'success', { id: vars.id });
       queryClient.invalidateQueries({ queryKey: ['admin', 'branches'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'districts'] });
-      // Hub details include isActive; a stale badge would mislead the admin
-      // who toggled the branch and re-navigated to its Hub.
       queryClient.invalidateQueries({
-        queryKey: ['admin', 'branch-hub', 'details', variables.id],
+        queryKey: ['admin', 'branch-hub', 'details', vars.id],
       });
     },
+    onError: (error) => logMutation('set_branch_active', 'error', error),
   });
 }
 
@@ -228,8 +266,11 @@ export function useSetOpeningBalancesLocked() {
   return useMutation({
     mutationFn: (locked: boolean) =>
       services.adminLocations.setOpeningBalancesLocked(locked),
-    onSuccess: () => {
+    onMutate: (locked) => logMutation('set_opening_balances_locked', 'start', { locked }),
+    onSuccess: (_data, locked) => {
+      logMutation('set_opening_balances_locked', 'success', { locked });
       invalidateAppConfig(queryClient);
     },
+    onError: (error) => logMutation('set_opening_balances_locked', 'error', error),
   });
 }

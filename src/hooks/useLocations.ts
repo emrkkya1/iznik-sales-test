@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { services } from '@/services';
+import { instrumentQuery, summarizeResult } from '@/utils/logger';
 
 export function useCities() {
   return useQuery({
     queryKey: ['cities'],
-    queryFn: () => services.locations.listCities(),
+    queryFn: instrumentQuery(
+      'list_cities',
+      () => services.locations.listCities(),
+      summarizeResult,
+    ),
     staleTime: 5 * 60_000,
   });
 }
@@ -13,7 +18,11 @@ export function useCities() {
 export function useDistricts(cityId: string | null) {
   return useQuery({
     queryKey: ['districts', cityId],
-    queryFn: () => services.locations.listDistricts(cityId as string),
+    queryFn: instrumentQuery(
+      'list_districts',
+      () => services.locations.listDistricts(cityId as string),
+      summarizeResult,
+    ),
     enabled: !!cityId,
   });
 }
@@ -21,7 +30,11 @@ export function useDistricts(cityId: string | null) {
 export function useBranches(districtId: string | null) {
   return useQuery({
     queryKey: ['branches', districtId],
-    queryFn: () => services.locations.listBranches(districtId ?? undefined),
+    queryFn: instrumentQuery(
+      'list_branches',
+      () => services.locations.listBranches(districtId ?? undefined),
+      summarizeResult,
+    ),
     enabled: !!districtId,
   });
 }
@@ -29,7 +42,10 @@ export function useBranches(districtId: string | null) {
 export function useBranchLocation(branchId: string | null) {
   return useQuery({
     queryKey: ['branch-location', branchId],
-    queryFn: () => services.locations.getBranch(branchId as string),
+    queryFn: instrumentQuery(
+      'get_branch',
+      () => services.locations.getBranch(branchId as string),
+    ),
     enabled: !!branchId,
   });
 }

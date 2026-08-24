@@ -38,3 +38,6 @@ export {
   useSetOpeningBalancesLocked,
 } from './useAdminLocations';
 export { useAuthStore } from '@/store';
+
+export { useGeographyDrilldown } from './useGeographyDrilldown';
+export type { DrilldownLevel } from './useGeographyDrilldown';

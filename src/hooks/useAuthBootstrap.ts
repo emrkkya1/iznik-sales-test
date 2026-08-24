@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { services } from '@/services';
 import { useAuthStore } from '@/store';
 import type { AuthSession } from '@/types';
+import { logQuery } from '@/utils/logger';
 
 // Restores the session on launch and keeps the store in sync with auth events.
 // An inactive or missing profile is treated as signed out (directed to sign-in).
@@ -35,10 +36,9 @@ export function useAuthBootstrap() {
         }
       } catch (error) {
         if (!active) return;
-        
         // If JWT validation fails (e.g., clock skew, expired token),
-        // clear the session instead of crashing
-        console.warn('Failed to validate session, clearing:', error);
+        // clear the session instead of crashing.
+        logQuery('auth_bootstrap_get_user', 'error', error);
         await services.auth.signOut();
         reset();
       }
@@ -49,7 +49,7 @@ export function useAuthBootstrap() {
         const session = await services.auth.getSession();
         if (active) await applySession(session);
       } catch (error) {
-        console.warn('Failed to restore session:', error);
+        logQuery('auth_bootstrap_get_session', 'error', error);
         if (active) reset();
       }
       if (active) setIsRestoring(false);

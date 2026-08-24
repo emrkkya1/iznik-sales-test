@@ -47,6 +47,18 @@ describe('formatDateForDisplay', () => {
     expect(formatted).toMatch(/03/);
     expect(formatted).toMatch(/2024/);
   });
+
+  it('accepts full ISO timestamps (RPC response shape)', () => {
+    const formatted = formatDateForDisplay('2026-08-22 13:52:04.356532+00');
+    expect(formatted).toMatch(/22/);
+    expect(formatted).toMatch(/08/);
+    expect(formatted).toMatch(/2026/);
+  });
+
+  it('passes non-date strings through unchanged', () => {
+    expect(formatDateForDisplay('not-a-date')).toBe('not-a-date');
+    expect(formatDateForDisplay('')).toBe('');
+  });
 });
 
 describe('parseIsoDate / formatIsoDate', () => {
