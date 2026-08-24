@@ -25,7 +25,7 @@ export const supabaseLocationRepository: LocationRepository = {
 
     return data.map((district) => ({
       id: district.id,
-      cityId: district.city_id,
+      cityId: district.city_id ?? '',
       name: district.name,
     }));
   },
@@ -47,9 +47,9 @@ export const supabaseLocationRepository: LocationRepository = {
 
     return data.map((branch) => ({
       id: branch.id,
-      districtId: branch.district_id,
+      districtId: branch.district_id ?? '',
       name: branch.name,
-      isActive: branch.is_active,
+      isActive: branch.is_active ?? true,
     }));
   },
 
@@ -65,9 +65,9 @@ export const supabaseLocationRepository: LocationRepository = {
 
     return {
       id: data.id,
-      districtId: data.district_id,
+      districtId: data.district_id ?? '',
       name: data.name,
-      isActive: data.is_active,
+      isActive: data.is_active ?? true,
       cityId:
         (data as { districts: { city_id: string } | null }).districts
           ?.city_id ?? null,

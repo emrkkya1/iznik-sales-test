@@ -4,7 +4,13 @@ export { useSignIn } from './useSignIn';
 export { useSignOut } from './useSignOut';
 export { useCurrentUser } from './useSession';
 export { useCities, useDistricts, useBranches, useBranchLocation } from './useLocations';
-export { useBranchProducts } from './useProducts';
+export {
+  useBranchProducts,
+  useBranchProductsWithStatus,
+  useSetBranchProductPrice,
+  useSetBranchProductActive,
+  useActivateBranchProduct,
+} from './useProducts';
 export { useMyDeliveries, useDelivery } from './useDeliveries';
 export {
   useCreateDelivery,
@@ -29,6 +35,7 @@ export {
   useBranchHubDetails,
   useBranchHubSummary,
   useBranchMovements,
+  useBranchMovementsInfinite,
   useCreateCity,
   useCreateDistrict,
   useCreateBranch,

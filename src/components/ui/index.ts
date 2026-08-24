@@ -25,3 +25,4 @@ export { ResultState } from './result-state';
 export { Sheet } from './sheet';
 export { ProgressBar } from './progress-bar';
 export { QueryError } from './query-error';
+export { BottomSheet } from './bottom-sheet';

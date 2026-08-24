@@ -1,5 +1,5 @@
 import type { PaymentRepository } from '@/services/contracts';
-import type { ManualPaymentInput, Payment } from '@/types';
+import type { ManualPaymentInput, Payment, PaymentType } from '@/types';
 
 import { supabaseClient } from './supabaseClient';
 
@@ -29,11 +29,11 @@ export const supabasePaymentRepository: PaymentRepository = {
 
     return {
       id: payment.id,
-      branchId: payment.branch_id,
-      userId: payment.user_id,
+      branchId: payment.branch_id ?? '',
+      userId: payment.user_id ?? '',
       deliveryId: payment.delivery_id,
       amount: payment.amount,
-      paymentType: payment.payment_type,
+      paymentType: payment.payment_type as PaymentType,
       date: payment.date,
       deletedAt: payment.deleted_at,
       deletedBy: payment.deleted_by,

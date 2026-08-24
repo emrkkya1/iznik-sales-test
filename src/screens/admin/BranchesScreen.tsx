@@ -20,6 +20,7 @@ import type {
   CityWithCounts,
   DistrictWithCounts,
 } from '@/types';
+import { getBalanceTone } from '@/utils/formatters';
 
 import { ActionMenu, type ActionMenuItem } from '../../components/admin/ActionMenu';
 import { Breadcrumb } from '../../components/admin/Breadcrumb';
@@ -267,9 +268,13 @@ export function BranchesScreen() {
             rows={branchesQuery.data ?? []}
             keyExtractor={(b) => b.id}
             renderRow={(branch) => (
-              <GeographyListRow
+<GeographyListRow
                 title={branch.name}
-                subtitle={`Bakiye ${formatBalance(branch.currentBalance)}`}
+                subtitle={`Bakiye ${formatBalance(branch.currentBalance)}${
+                  branch.currentBalance !== 0
+                    ? ` · ${getBalanceTone(branch.currentBalance)}`
+                    : ''
+                }`}
                 isActive={branch.isActive}
                 balanceTone={balanceTone(branch.currentBalance)}
                 onPress={() => navigateToBranchHub(branch.id)}

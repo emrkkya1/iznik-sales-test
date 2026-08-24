@@ -16,57 +16,57 @@ import { getIstanbulToday } from '@/utils/dates';
 
 function mapDelivery(row: {
   id: string;
-  branch_id: string;
-  user_id: string;
+  branch_id: string | null;
+  user_id: string | null;
   total_sales_amount: number;
   date: string;
   idempotency_key: string | null;
   deleted_at: string | null;
   deleted_by: string | null;
   deletion_reason: string | null;
-  created_at: string;
+  created_at: string | null;
 }): Delivery {
   return {
     id: row.id,
-    branchId: row.branch_id,
-    userId: row.user_id,
+    branchId: row.branch_id ?? '',
+    userId: row.user_id ?? '',
     totalSalesAmount: row.total_sales_amount,
     date: row.date,
     idempotencyKey: row.idempotency_key,
     deletedAt: row.deleted_at,
     deletedBy: row.deleted_by,
     deletionReason: row.deletion_reason,
-    createdAt: row.created_at,
+    createdAt: row.created_at ?? '',
   };
 }
 
 function mapDeliveryItem(row: {
   id: string;
-  delivery_id: string;
-  product_id: string;
+  delivery_id: string | null;
+  product_id: string | null;
   delivered_quantity: number;
   returned_quantity: number;
-  net_quantity: number;
+  net_quantity: number | null;
   unit_price: number;
 }): DeliveryItem {
   return {
     id: row.id,
-    deliveryId: row.delivery_id,
-    productId: row.product_id,
+    deliveryId: row.delivery_id ?? '',
+    productId: row.product_id ?? '',
     deliveredQuantity: row.delivered_quantity,
     returnedQuantity: row.returned_quantity,
-    netQuantity: row.net_quantity,
+    netQuantity: row.net_quantity ?? 0,
     unitPrice: row.unit_price,
   };
 }
 
 function mapPayment(row: {
   id: string;
-  branch_id: string;
-  user_id: string;
+  branch_id: string | null;
+  user_id: string | null;
   delivery_id: string | null;
   amount: number;
-  payment_type: 'field_collection' | 'bank_transfer';
+  payment_type: string;
   date: string;
   deleted_at: string | null;
   deleted_by: string | null;
@@ -74,11 +74,11 @@ function mapPayment(row: {
 }): Payment {
   return {
     id: row.id,
-    branchId: row.branch_id,
-    userId: row.user_id,
+    branchId: row.branch_id ?? '',
+    userId: row.user_id ?? '',
     deliveryId: row.delivery_id,
     amount: row.amount,
-    paymentType: row.payment_type,
+    paymentType: row.payment_type as 'field_collection' | 'bank_transfer',
     date: row.date,
     deletedAt: row.deleted_at,
     deletedBy: row.deleted_by,
@@ -120,12 +120,14 @@ async function fetchReceiptSummary(deliveryId: string): Promise<ReceiptSummary> 
   const { data: branch, error: branchError } = await supabaseClient
     .from('branches')
     .select('id, district_id, name, current_balance, opening_balance, is_active')
-    .eq('id', delivery.branch_id)
+    .eq('id', delivery.branch_id ?? '')
     .single();
 
   if (branchError) throw branchError;
 
-  const productIds = (items ?? []).map((item) => item.product_id);
+  const productIds = (items ?? [])
+    .map((item) => item.product_id)
+    .filter((id): id is string => Boolean(id));
   let products: {
     id: string;
     name: string;
@@ -141,7 +143,12 @@ async function fetchReceiptSummary(deliveryId: string): Promise<ReceiptSummary> 
 
     if (productsError) throw productsError;
 
-    products = productData ?? [];
+    products = (productData ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      image_url: p.image_url,
+      is_active: p.is_active ?? true,
+    }));
   }
 
   return buildReceiptSummary({
@@ -156,11 +163,11 @@ async function fetchReceiptSummary(deliveryId: string): Promise<ReceiptSummary> 
     payments: (payments ?? []).map(mapPayment),
     branch: {
       id: branch.id,
-      districtId: branch.district_id,
+      districtId: branch.district_id ?? '',
       name: branch.name,
-      currentBalance: branch.current_balance,
-      openingBalance: branch.opening_balance,
-      isActive: branch.is_active,
+      currentBalance: branch.current_balance ?? 0,
+      openingBalance: branch.opening_balance ?? 0,
+      isActive: branch.is_active ?? true,
     } satisfies Branch,
   });
 }

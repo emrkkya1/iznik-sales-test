@@ -1,5 +1,5 @@
 import type { SessionRepository } from '@/services/contracts';
-import type { User } from '@/types';
+import type { User, UserRole } from '@/types';
 
 import { supabaseClient } from './supabaseClient';
 
@@ -41,8 +41,8 @@ export const supabaseSessionRepository: SessionRepository = {
           id: data.id,
           fullName: data.full_name,
           username: data.username,
-          role: data.role,
-          isActive: data.is_active,
+          role: data.role as UserRole,
+          isActive: data.is_active ?? false,
         } satisfies User;
       }
 

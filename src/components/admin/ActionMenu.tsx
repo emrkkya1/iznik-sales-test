@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, type LayoutChangeEvent } from 'react-native';
+import { Modal, Pressable, View, type LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Box } from '@/components/ui/box';
@@ -25,6 +25,11 @@ type ActionMenuProps = {
 //   - fallback: below the trigger when above would clip into the status bar
 // Tap-outside (light scrim) dismisses; tapping an item runs its onPress
 // then closes. Built on RN's Modal with absolute positioning.
+//
+// Note: root uses inline `style={{flex:1, ...}}` instead of className to
+// avoid any NativeWind v5 polyfill interaction inside Modal's native
+// modal window (the className flex-1 polyfill can fail to apply there,
+// leaving the scrim zero-height and taps unhandled).
 export function ActionMenu({ open, onClose, items, anchor }: ActionMenuProps) {
   const insets = useSafeAreaInsets();
   const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
@@ -36,13 +41,13 @@ export function ActionMenu({ open, onClose, items, anchor }: ActionMenuProps) {
   // Decide flip: try above first, fall back to below.
   const placement = (() => {
     if (!anchor) return null;
-    const menuHeight = measuredHeight ?? 0;
+    const menuHeight = measuredHeight ?? 200; // assume a safe default before measurement
     const aboveY = anchor.top - menuHeight - 8;
     const minY = insets.top + 8;
     if (aboveY >= minY) {
-      return { top: aboveY, anchor: 'above' as const };
+      return { top: aboveY };
     }
-    return { top: anchor.top + anchor.height + 8, anchor: 'below' as const };
+    return { top: anchor.top + anchor.height + 8 };
   })();
 
   return (
@@ -53,50 +58,54 @@ export function ActionMenu({ open, onClose, items, anchor }: ActionMenuProps) {
       onRequestClose={onClose}
     >
       <Pressable
-        className="flex-1 bg-black/20"
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)' }}
         onPress={onClose}
         accessibilityRole="button"
         accessibilityLabel="Menüyü kapat"
       >
         {anchor && placement ? (
-          <Pressable
-            onPress={(e) => e.stopPropagation()}
+          <View
             style={{
               position: 'absolute',
               top: placement.top,
               right: Math.max(insets.right, 16),
               minWidth: 200,
             }}
-            onLayout={handleMenuLayout}
           >
-            <Box className="rounded-xl border border-border bg-card shadow-lg">
-              {items.map((item, idx) => (
-                <Pressable
-                  key={`${item.label}-${idx}`}
-                  onPress={() => {
-                    item.onPress();
-                    onClose();
-                  }}
-                  accessibilityRole="button"
-                  className={`px-4 py-3 ${
-                    idx < items.length - 1 ? 'border-b border-border' : ''
-                  }`}
-                >
-                  <Text
-                    size="md"
-                    bold
-                    className={
-                      item.destructive
-                        ? 'text-destructive'
-                        : 'text-foreground'
-                    }
+            <Pressable
+              onLayout={handleMenuLayout}
+              onPress={(e) => e.stopPropagation()}
+              style={{ borderRadius: 12, overflow: 'hidden' }}
+            >
+              <Box className="rounded-xl border border-border bg-card shadow-lg">
+                {items.map((item, idx) => (
+                  <Pressable
+                    key={`${item.label}-${idx}`}
+                    onPress={() => {
+                      item.onPress();
+                      onClose();
+                    }}
+                    accessibilityRole="button"
+                    className={`px-4 py-3 ${
+                      idx < items.length - 1 ? 'border-b border-border' : ''
+                    }`}
                   >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </Box>
-          </Pressable>
+                    <Text
+                      size="md"
+                      bold
+                      className={
+                        item.destructive
+                          ? 'text-destructive'
+                          : 'text-foreground'
+                      }
+                    >
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </Box>
+            </Pressable>
+          </View>
         ) : null}
       </Pressable>
     </Modal>

@@ -1,20 +1,25 @@
 import { Box } from '@/components/ui/box';
+import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { formatCount } from '@/utils/formatCount';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, getBalanceTone } from '@/utils/formatters';
 
 type SummaryCardProps = {
   title: string;
   value: string | number | null;
   format?: 'currency' | 'count' | 'text';
-  // Used by Güncel Bakiye card: positive balance paints destructive (we are
-  // owed), negative balance paints primary (credit). Ignored for non-currency
+  // Used by Güncel Bakiye card: positive balance paints info (we earn),
+  // negative balance paints destructive (we lose). Ignored for non-currency
   // values.
   colorCoded?: boolean;
   subtitle?: string;
   isLoading?: boolean;
   className?: string;
+  // When true AND the value is a number AND format is currency, renders a
+  // subtle "Kazanç" / "Zarar" / "Bakiye" label next to the value so the
+  // meaning of the number is unambiguous at a glance.
+  showBalanceTone?: boolean;
 };
 
 function renderValue(value: string | number | null, format: SummaryCardProps['format']): string {
@@ -26,8 +31,10 @@ function renderValue(value: string | number | null, format: SummaryCardProps['fo
 
 function colorClassFor(value: number, colorCoded: boolean | undefined): string | undefined {
   if (!colorCoded) return undefined;
-  if (value > 0) return 'text-destructive';
-  if (value < 0) return 'text-primary';
+  // Positive balance = "Kazanç" (we earn money from the branch) → info/blue.
+  // Negative balance = "Zarar" (we lose money to the branch) → destructive/red.
+  if (value > 0) return 'text-info';
+  if (value < 0) return 'text-destructive';
   return 'text-foreground';
 }
 
@@ -39,13 +46,19 @@ export function SummaryCard({
   colorCoded,
   subtitle,
   isLoading = false,
+  showBalanceTone = false,
   className,
 }: SummaryCardProps) {
   const numericValue = typeof value === 'number' ? value : 0;
+  const isCurrencyNumber =
+    format === 'currency' && typeof value === 'number';
   const valueClass =
-    format === 'currency' && colorCoded
+    isCurrencyNumber && colorCoded
       ? colorClassFor(numericValue, colorCoded)
       : 'text-foreground';
+
+  const toneLabel =
+    showBalanceTone && isCurrencyNumber ? getBalanceTone(numericValue) : null;
 
   return (
     <Box
@@ -60,9 +73,19 @@ export function SummaryCard({
         {isLoading || value === null ? (
           <Box className="h-7 w-24 rounded bg-muted" />
         ) : (
-          <Text size="xl" bold className={valueClass}>
-            {renderValue(value, format)}
-          </Text>
+          <HStack space="xs" className="items-baseline">
+            <Text size="xl" bold className={valueClass}>
+              {renderValue(value, format)}
+            </Text>
+            {toneLabel && toneLabel !== 'Bakiye' ? (
+              <Text
+                size="xs"
+                className="text-muted-foreground"
+              >
+                {toneLabel}
+              </Text>
+            ) : null}
+          </HStack>
         )}
         {subtitle ? (
           <Text size="xs" className="text-muted-foreground">

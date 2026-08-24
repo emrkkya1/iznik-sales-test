@@ -7,7 +7,7 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon, AlertCircleIcon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, getBalanceTone } from '@/utils/formatters';
 import type { ReceiptPreview } from '@/utils/receiptPreview';
 
 type CheckoutSummaryProps = {
@@ -34,18 +34,22 @@ function Row({
   );
 }
 
+function resultingBalanceTone(value: number): 'info' | 'destructive' | 'default' {
+  // Positive balance (we will receive from the branch) → info/blue.
+  // Negative balance (we owe the branch) → destructive/red.
+  if (value > 0) return 'info';
+  if (value < 0) return 'destructive';
+  return 'default';
+}
+
 export function CheckoutSummary({
   branchName,
   preview,
   paymentAmount,
   loadingBalance = false,
 }: CheckoutSummaryProps) {
-  const balanceLabel =
-    preview.resultingBalance > 0
-      ? 'Borç'
-      : preview.resultingBalance < 0
-        ? 'Alacak'
-        : 'Bakiye';
+  const balanceLabel = getBalanceTone(preview.resultingBalance);
+  const balanceTone = resultingBalanceTone(preview.resultingBalance);
 
   return (
     <Box className="rounded-xl border border-border bg-card p-4">
@@ -122,14 +126,16 @@ export function CheckoutSummary({
               bold
               value={preview.resultingBalance}
               showSign
+              tone={balanceTone}
             />
-            <Text size="xs" className="text-muted-foreground">
-              {balanceLabel}
-            </Text>
+            {balanceLabel !== 'Bakiye' ? (
+              <Text size="xs" className="text-muted-foreground">
+                {balanceLabel}
+              </Text>
+            ) : null}
           </HStack>
         </Row>
       </VStack>
     </Box>
   );
 }
-

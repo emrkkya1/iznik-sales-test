@@ -5,7 +5,7 @@ import { Box } from '@/components/ui/box';
 import { Text } from '@/components/ui/text';
 import { badgeStyle, badgeTextStyle } from './styles';
 
-type BadgeVariant = 'success' | 'muted' | 'destructive' | 'info';
+type BadgeVariant = 'success' | 'muted' | 'destructive' | 'info' | 'inactive';
 
 type BadgeProps = {
   variant?: BadgeVariant;

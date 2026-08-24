@@ -478,6 +478,22 @@ const EditIcon = createIcon({
 EditIcon.displayName = 'EditIcon';
 export { EditIcon };
 
+const TruckIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Path d="M14 17H4V5H14V17Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M14 9H19L22 12V17H14V9Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M2 17H14" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="6" cy="19" r="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Circle cx="18" cy="19" r="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+TruckIcon.displayName = 'TruckIcon';
+export { TruckIcon };
+
 const MoreVerticalIcon = createIcon({
   Root: Svg,
   viewBox: '0 0 24 24',
