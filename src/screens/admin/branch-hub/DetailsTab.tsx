@@ -42,6 +42,9 @@ export function DetailsTab({ branchId }: DetailsTabProps) {
         <Row label="Şehir / İlçe" value={`${d.cityName} / ${d.districtName}`} />
         <Row
           label="Açılış Bakiyesi"
+          // DB stores cash in hand at branch creation (cash-flow
+          // convention: positive = cash in hand, negative = we owe the
+          // branch from the start).
           value={`${formatCurrency(d.openingBalance)} · ${getBalanceTone(d.openingBalance)}`}
         />
         <Row

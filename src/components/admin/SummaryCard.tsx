@@ -9,15 +9,15 @@ type SummaryCardProps = {
   title: string;
   value: string | number | null;
   format?: 'currency' | 'count' | 'text';
-  // Used by Güncel Bakiye card: positive balance paints info (we earn),
-  // negative balance paints destructive (we lose). Ignored for non-currency
+  // Used by Güncel Bakiye card: positive balance paints info (we are owed),
+  // negative balance paints destructive (we owe). Ignored for non-currency
   // values.
   colorCoded?: boolean;
   subtitle?: string;
   isLoading?: boolean;
   className?: string;
   // When true AND the value is a number AND format is currency, renders a
-  // subtle "Kazanç" / "Zarar" / "Bakiye" label next to the value so the
+  // subtle "Alacak" / "Borç" / "Bakiye" label next to the value so the
   // meaning of the number is unambiguous at a glance.
   showBalanceTone?: boolean;
 };
@@ -31,8 +31,8 @@ function renderValue(value: string | number | null, format: SummaryCardProps['fo
 
 function colorClassFor(value: number, colorCoded: boolean | undefined): string | undefined {
   if (!colorCoded) return undefined;
-  // Positive balance = "Kazanç" (we earn money from the branch) → info/blue.
-  // Negative balance = "Zarar" (we lose money to the branch) → destructive/red.
+  // Positive balance = "Alacak" (the branch owes us) → info/blue.
+  // Negative balance = "Borç" (we owe the branch) → destructive/red.
   if (value > 0) return 'text-info';
   if (value < 0) return 'text-destructive';
   return 'text-foreground';
