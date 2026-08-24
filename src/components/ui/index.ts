@@ -1,4 +1,5 @@
 export { Box } from './box';
+export { Badge } from './badge';
 export { Button, ButtonText, ButtonIcon, ButtonSpinner } from './button';
 export { Divider } from './divider';
 export { Heading } from './heading';
@@ -23,3 +24,4 @@ export { DateField } from './date-field';
 export { ResultState } from './result-state';
 export { Sheet } from './sheet';
 export { ProgressBar } from './progress-bar';
+export { QueryError } from './query-error';

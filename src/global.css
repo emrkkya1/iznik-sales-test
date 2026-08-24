@@ -34,8 +34,8 @@
     --accent-foreground: 106 71 21;
 
     /* Borders & inputs */
-    --border: 229 220 205;
-    --input: 229 220 205;
+    --border: 240 234 222;
+    --input: 240 234 222;
     --ring: 114 78 28; /* #724E1C */
 
     /* Destructive */
@@ -47,6 +47,12 @@
     --info-foreground: 255 255 255;
     --info-soft: 60 116 156; /* #3C749C */
     --info-soft-foreground: 255 255 255;
+
+    /* Surface — cool neutral gray for non-warm control backgrounds
+       (e.g. pill segmented controls). Distinct from --muted which is a
+       warm cream and reserved for cream-tinted surfaces. */
+    --surface-muted: 241 243 245; /* #F1F3F5 */
+    --surface-muted-foreground: 71 85 105; /* #475569 */
   }
 
   /* ─── Future dark theme (placeholder) ──────────────────────────
@@ -81,6 +87,8 @@
   --color-info-foreground: rgb(var(--info-foreground));
   --color-info-soft: rgb(var(--info-soft));
   --color-info-soft-foreground: rgb(var(--info-soft-foreground));
+  --color-surface-muted: rgb(var(--surface-muted));
+  --color-surface-muted-foreground: rgb(var(--surface-muted-foreground));
 
   /* Typography — Plus Jakarta Sans (embedded at build time via expo-font plugin) */
   --font-body: PlusJakartaSans_400Regular;

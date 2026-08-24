@@ -56,14 +56,20 @@ export function canEditDelivery(deliveryDate: string): boolean {
   return hour < 23 || (hour === 23 && minute < 59);
 }
 
-// Formats a YYYY-MM-DD string for display in Turkish locale.
+// Formats a date for display in Turkish locale. Accepts both YYYY-MM-DD
+// (returned by getIstanbulToday / parseIsoDate) and full ISO timestamps
+// (returned by Supabase RPCs for columns like branches.created_at).
+// The regex prefixes on the date portion and ignores the time/zone tail,
+// which keeps the constructor from receiving NaN month/day values.
 export function formatDateForDisplay(date: string): string {
-  const [year, month, day] = date.split('-').map(Number);
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+  if (!match) return date; // pass through non-date strings unchanged
+  const [, year, month, day] = match;
   return new Intl.DateTimeFormat('tr-TR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  }).format(new Date(year, month - 1, day));
+  }).format(new Date(Number(year), Number(month) - 1, Number(day)));
 }
 
 // YYYY-MM-DD -> Date using local calendar. Noon avoids any UTC day-shift when
