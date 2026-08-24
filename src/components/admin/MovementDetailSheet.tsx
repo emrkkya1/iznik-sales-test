@@ -5,21 +5,11 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useDelivery } from '@/hooks';
-import { formatDateForDisplay } from '@/utils/dates';
-import { getBalanceTone } from '@/utils/formatters';
-
-type MovementItem = {
-  id: string;
-  kind: 'delivery' | 'payment';
-  date: string;
-  amount: number;
-  paymentType: string | null;
-  isDeleted: boolean;
-  createdAt: string;
-};
+import type { MovementRow } from '@/types';
+import { formatDateForDisplay, formatDateTime } from '@/utils/dates';
 
 type MovementDetailSheetProps = {
-  item: MovementItem | null;
+  item: MovementRow | null;
   onClose: () => void;
 };
 
@@ -28,11 +18,15 @@ const PAYMENT_TYPE_LABEL: Record<string, string> = {
   bank_transfer: 'Banka Havalesi',
 };
 
-// Read-only bottom-anchored sheet for delivery / payment detail view.
+// Read-only bottom-anchored sheet for delivery / manual payment detail view.
 // Uses the shared BottomSheet primitive for the chrome.
 //
 // Layout (top → bottom):
-//   1. Big price + Kazanç/Zarar label
+//   1. Big amount — NET (Alınan - Verilen) for deliveries, payment amount
+//      for standalone payments. Cash-flow convention: positive = we have
+//      cash in hand from this movement; negative = cash is missing. No tone
+//      is applied so the leading "-" tells the story on its own. The
+//      Verilen / Alınan breakdown lives in the list row (Hareketler tab).
 //   2. Teslim Edilen Ürünler list (deliveries only) — indented rows, no
 //      card chrome, no dividers between rows
 //   3. Meta rows (Tarih, Tür, …, Durum) — with subtle dividers between them
@@ -50,6 +44,17 @@ export function MovementDetailSheet({ item, onClose }: MovementDetailSheetProps)
       : 'Tahsilat Detayı'
     : '';
 
+  // Big amount follows the cash-flow convention ("+ means we got money"):
+  //   Delivery  → NET = Alınan - Verilen. Positive on overpayment (cash
+  //                in hand), negative when products exceed payment (cash
+  //                missing).
+  //   Payment   → the payment amount itself (cash in hand, no offset).
+  const bigAmount = item
+    ? item.kind === 'delivery' && item.payment
+      ? item.payment.amount - item.amount
+      : item.amount
+    : 0;
+
   return (
     <BottomSheet
       open={item !== null}
@@ -58,25 +63,7 @@ export function MovementDetailSheet({ item, onClose }: MovementDetailSheetProps)
     >
       {item ? (
         <VStack space="md">
-          <VStack space="xs">
-            <Amount
-              size="2xl"
-              bold
-              value={item.amount}
-              tone={
-                item.amount > 0
-                  ? 'info'
-                  : item.amount < 0
-                    ? 'destructive'
-                    : 'default'
-              }
-            />
-            {getBalanceTone(item.amount) !== 'Bakiye' ? (
-              <Text size="sm" className="text-muted-foreground">
-                {getBalanceTone(item.amount)}
-              </Text>
-            ) : null}
-          </VStack>
+          <Amount size="2xl" bold value={bigAmount} />
 
           {item.kind === 'delivery' && !item.isDeleted ? (
             <DeliveryItemsList query={deliveryQuery} />
@@ -180,13 +167,6 @@ function formatUnitPriceLine(price: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(price);
-}
-
-function formatDateTime(iso: string): string {
-  const [datePart, timePart] = iso.split('T');
-  const timeOnly = timePart ? timePart.split(/[+\-Z]/)[0] : '';
-  const date = formatDateForDisplay(datePart ?? iso);
-  return timeOnly ? `${date} ${timeOnly}` : date;
 }
 
 type DetailRowProps = {

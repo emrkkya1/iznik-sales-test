@@ -54,7 +54,7 @@ export function AdminShell({ children }: AdminShellProps) {
   return (
     <SafeAreaView style={{ flex: 1 }} className="bg-background">
       <Box style={{ flex: 1 }} className="flex-col">
-        <HStack className="items-center justify-between border-b border-border px-6 py-4">
+        <HStack className="items-center justify-between border-b border-border bg-background px-6 py-4">
           <HStack space="md" className="items-center">
             <Box className="h-9 w-9 items-center justify-center rounded-xl bg-primary">
               <Text size="sm" bold className="text-primary-foreground">
@@ -92,7 +92,9 @@ export function AdminShell({ children }: AdminShellProps) {
           </HStack>
         </HStack>
 
-        <Box style={{ flex: 1 }}>{children}</Box>
+        <Box style={{ flex: 1 }} className="bg-background">
+          {children}
+        </Box>
 
         <HStack className="border-t border-border bg-card px-2 py-1 flex-shrink-0">
           {NAV_ITEMS.map((item) => {

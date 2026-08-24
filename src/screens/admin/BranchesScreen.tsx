@@ -40,6 +40,8 @@ type ActionTarget =
   | { kind: 'district'; entity: DistrictWithCounts }
   | { kind: 'branch'; entity: BranchWithContext };
 
+// DB stores cash in hand directly (cash-flow convention). Positive =
+// cash in hand from this branch, negative = cash missing.
 function balanceTone(balance: number): 'positive' | 'negative' | 'neutral' {
   if (balance > 0) return 'positive';
   if (balance < 0) return 'negative';

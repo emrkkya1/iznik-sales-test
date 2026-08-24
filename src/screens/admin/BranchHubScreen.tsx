@@ -111,6 +111,8 @@ export function BranchHubScreen() {
         <HStack space="md" className="items-stretch">
           <SummaryCard
             title="Güncel Bakiye"
+            // DB stores cash in hand directly (cash-flow convention: positive
+            // = cash in hand from this branch, negative = cash missing).
             value={data?.currentBalance ?? null}
             format="currency"
             colorCoded
@@ -135,6 +137,8 @@ export function BranchHubScreen() {
           />
           <SummaryCard
             title="Açılış Bakiyesi"
+            // DB stores cash in hand at branch creation (cash-flow
+            // convention: positive = cash in hand from this branch at open).
             value={data?.openingBalance ?? null}
             format="currency"
             showBalanceTone

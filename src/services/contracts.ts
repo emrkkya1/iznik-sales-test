@@ -4,7 +4,6 @@ import type {
   Branch,
   BranchHubDetails,
   BranchLocation,
-  BranchMovements,
   BranchProductWithPrice,
   BranchProductWithStatus,
   BranchWithContext,
@@ -21,6 +20,7 @@ import type {
   DistrictWithCounts,
   DistributionRow,
   ManualPaymentInput,
+  MovementRow,
   Payment,
   ReceiptSummary,
   SetBranchProductActiveInput,
@@ -93,11 +93,11 @@ export interface AdminLocationRepository {
   setOpeningBalancesLocked(locked: boolean): Promise<void>;
   getOpeningBalancesLocked(): Promise<boolean>;
   getBranchHubDetails(branchId: string): Promise<BranchHubDetails>;
-  listBranchMovements(
+  listDeliveriesWithPayments(
     branchId: string,
     limit?: number,
     offset?: number,
-  ): Promise<BranchMovements>;
+  ): Promise<MovementRow[]>;
 }
 
 export interface ReportsRepository {

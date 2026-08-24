@@ -2,7 +2,6 @@ import type { AdminLocationRepository } from '@/services/contracts';
 import type {
   Branch,
   BranchHubDetails,
-  BranchMovements,
   BranchWithContext,
   City,
   CityWithCounts,
@@ -11,6 +10,7 @@ import type {
   CreateDistrictInput,
   District,
   DistrictWithCounts,
+  MovementRow,
 } from '@/types';
 
 import { supabaseClient } from './supabaseClient';
@@ -128,13 +128,16 @@ export const supabaseAdminLocationRepository: AdminLocationRepository = {
     return data as unknown as BranchHubDetails;
   },
 
-  async listBranchMovements(branchId, limit = 50, offset = 0) {
-    const { data, error } = await supabaseClient.rpc('list_branch_movements', {
-      p_branch_id: branchId,
-      p_limit: limit,
-      p_offset: offset,
-    });
+  async listDeliveriesWithPayments(branchId, limit = 50, offset = 0) {
+    const { data, error } = await supabaseClient.rpc(
+      'list_deliveries_with_payments',
+      {
+        p_branch_id: branchId,
+        p_limit: limit,
+        p_offset: offset,
+      },
+    );
     if (error) throw error;
-    return data as unknown as BranchMovements;
+    return (data ?? []) as unknown as MovementRow[];
   },
 };

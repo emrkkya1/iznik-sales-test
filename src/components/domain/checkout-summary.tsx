@@ -7,7 +7,11 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon, AlertCircleIcon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { formatCurrency, getBalanceTone } from '@/utils/formatters';
+import {
+  formatCurrency,
+  getBalanceTone,
+  getBranchBalanceDirection,
+} from '@/utils/formatters';
 import type { ReceiptPreview } from '@/utils/receiptPreview';
 
 type CheckoutSummaryProps = {
@@ -35,8 +39,8 @@ function Row({
 }
 
 function resultingBalanceTone(value: number): 'info' | 'destructive' | 'default' {
-  // Positive balance (we will receive from the branch) → info/blue.
-  // Negative balance (we owe the branch) → destructive/red.
+  // Cash-flow convention: positive = cash in hand from this branch
+  // (info/blue). Negative = cash missing (destructive/red).
   if (value > 0) return 'info';
   if (value < 0) return 'destructive';
   return 'default';
@@ -48,79 +52,101 @@ export function CheckoutSummary({
   paymentAmount,
   loadingBalance = false,
 }: CheckoutSummaryProps) {
-  const balanceLabel = getBalanceTone(preview.resultingBalance);
+  const requiredTone = getBalanceTone(preview.requiredAmount);
   const balanceTone = resultingBalanceTone(preview.resultingBalance);
+  const previousDirection = getBranchBalanceDirection(
+    preview.previousBalance,
+    true,
+  );
+  const resultingDirection = getBranchBalanceDirection(
+    preview.resultingBalance,
+    false,
+  );
 
   return (
-    <Box className="rounded-xl border border-border bg-card p-4">
-      <VStack space="sm">
-        <Text size="sm" bold className="text-foreground">
-          {branchName}
-        </Text>
-
-        {preview.lines.length === 0 ? (
-          <Text size="sm" className="text-muted-foreground">
-            Henüz ürün eklenmedi.
+    <VStack space="sm">
+      <Box className="rounded-xl border border-border bg-card p-4">
+        <VStack space="sm">
+          <Text size="sm" bold className="text-foreground">
+            {branchName}
           </Text>
-        ) : (
-          <VStack space="sm">
-            {preview.lines.map((line) => (
-              <VStack key={line.productId} space="xs" className="py-1">
-                <HStack className="items-center justify-between">
-                  <Text size="sm" className="text-foreground">
-                    {line.productName}
-                  </Text>
-                  <Amount size="sm" value={line.lineTotal} />
-                </HStack>
-                <Text size="xs" className="text-muted-foreground">
-                  {line.deliveredQuantity} adet × {formatCurrency(line.unitPrice)}
-                </Text>
-              </VStack>
-            ))}
-          </VStack>
-        )}
 
-        <Divider />
-
-        <Row label="Tutar">
-          <Amount size="md" bold value={preview.requiredAmount} />
-        </Row>
-        <Row label="Tahsilat">
-          <HStack space="sm" className="items-center">
-            {paymentAmount <= 0 ? (
-              <HStack space="xs" className="items-center">
-                <Icon
-                  as={AlertCircleIcon}
-                  size="sm"
-                  className="text-muted-foreground"
-                />
-                <Text size="xs" className="text-muted-foreground">
-                  Tahsilat girilmedi
-                </Text>
-              </HStack>
-            ) : null}
-            <Amount size="md" value={paymentAmount} tone="muted" />
-          </HStack>
-        </Row>
-        <Row label="Önceki Bakiye">
-          {loadingBalance ? (
-            <Text size="md" className="text-muted-foreground">
-              …
+          {preview.lines.length === 0 ? (
+            <Text size="sm" className="text-muted-foreground">
+              Henüz ürün eklenmedi.
             </Text>
           ) : (
-            <Amount
-              size="md"
-              value={preview.previousBalance}
-              tone="muted"
-              showSign
-            />
+            <VStack space="sm">
+              {preview.lines.map((line) => {
+                const hasReturn = line.returnedQuantity > 0;
+                const netIsNegative = line.netQuantity < 0;
+                const lineTone = netIsNegative ? 'destructive' : 'default';
+                return (
+                  <VStack key={line.productId} space="xs" className="py-1">
+                    <HStack className="items-center justify-between">
+                      <Text size="sm" className="text-foreground">
+                        {line.productName}
+                      </Text>
+                      <Amount size="sm" value={line.lineTotal} tone={lineTone} />
+                    </HStack>
+                    <Text size="xs" className="text-muted-foreground">
+                      {hasReturn
+                        ? `Verilen: ${line.deliveredQuantity} · İade: ${line.returnedQuantity} · Net: ${line.netQuantity}`
+                        : `${line.deliveredQuantity} adet × ${formatCurrency(line.unitPrice)}`}
+                    </Text>
+                  </VStack>
+                );
+              })}
+            </VStack>
           )}
-        </Row>
 
-        <Divider />
+          <Divider />
 
-        <Row label="Yeni Bakiye">
-          <HStack space="sm" className="items-center">
+          <Row label="Tutar">
+            <HStack space="sm" className="items-center">
+              <Amount size="md" bold value={preview.requiredAmount} />
+              {requiredTone !== 'Bakiye' ? (
+                <Text size="xs" className="text-muted-foreground">
+                  {requiredTone}
+                </Text>
+              ) : null}
+            </HStack>
+          </Row>
+          <Row label="Tahsilat">
+            <HStack space="sm" className="items-center">
+              {paymentAmount <= 0 ? (
+                <HStack space="xs" className="items-center">
+                  <Icon
+                    as={AlertCircleIcon}
+                    size="sm"
+                    className="text-muted-foreground"
+                  />
+                  <Text size="xs" className="text-muted-foreground">
+                    Tahsilat girilmedi
+                  </Text>
+                </HStack>
+              ) : null}
+              <Amount size="md" value={paymentAmount} tone="muted" />
+            </HStack>
+          </Row>
+          <Row label="Önceki Şube Bakiyesi">
+            {loadingBalance ? (
+              <Text size="md" className="text-muted-foreground">
+                …
+              </Text>
+            ) : (
+              <Amount
+                size="md"
+                value={preview.previousBalance}
+                tone="muted"
+                showSign
+              />
+            )}
+          </Row>
+
+          <Divider />
+
+          <Row label="Yeni Şube Bakiyesi">
             <Amount
               size="lg"
               bold
@@ -128,14 +154,29 @@ export function CheckoutSummary({
               showSign
               tone={balanceTone}
             />
-            {balanceLabel !== 'Bakiye' ? (
-              <Text size="xs" className="text-muted-foreground">
-                {balanceLabel}
-              </Text>
-            ) : null}
-          </HStack>
-        </Row>
-      </VStack>
-    </Box>
+          </Row>
+        </VStack>
+      </Box>
+
+      <Text size="xs" className="px-1 text-muted-foreground">
+        <Text size="xs" bold className="text-foreground">
+          {formatCurrency(preview.requiredAmount)}
+        </Text>{' '}
+        tutarında ürün verildi,{' '}
+        <Text size="xs" bold className="text-foreground">
+          {formatCurrency(paymentAmount)}
+        </Text>{' '}
+        tahsilat yapıldı.{' '}
+        {previousDirection}{' '}
+        <Text size="xs" bold className="text-foreground">
+          {formatCurrency(Math.abs(preview.previousBalance))}
+        </Text>{' '}
+        iken {resultingDirection}{' '}
+        <Text size="xs" bold className="text-foreground">
+          {formatCurrency(Math.abs(preview.resultingBalance))}
+        </Text>{' '}
+        oldu.
+      </Text>
+    </VStack>
   );
 }

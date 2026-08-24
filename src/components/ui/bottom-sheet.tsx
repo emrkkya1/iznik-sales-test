@@ -37,7 +37,7 @@ export function BottomSheet({
   title,
   onClose,
   children,
-  maxHeight = 560,
+  maxHeight = 480,
   scrollable = true,
   contentPadding = 24,
 }: BottomSheetProps) {
@@ -64,6 +64,7 @@ export function BottomSheet({
             style={{
               paddingBottom: Math.max(insets.bottom, 12),
               maxHeight,
+              flexShrink: 1,
             }}
           >
             <HStack className="items-center justify-between px-4 py-3">
@@ -77,6 +78,7 @@ export function BottomSheet({
 
             {scrollable ? (
               <ScrollView
+                style={{ flexGrow: 0, flexShrink: 1 }}
                 contentContainerStyle={{
                   padding: contentPadding,
                   gap: 12,

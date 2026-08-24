@@ -15,6 +15,7 @@ type QuantityStepperProps = {
   step?: number;
   disabled?: boolean;
   label?: string;
+  compact?: boolean;
 };
 
 function clamp(n: number, min: number, max: number): number {
@@ -29,6 +30,7 @@ export function QuantityStepper({
   step = 1,
   disabled = false,
   label,
+  compact = false,
 }: QuantityStepperProps) {
   const [text, setText] = useState(String(value));
   const [prevValue, setPrevValue] = useState(value);
@@ -59,11 +61,17 @@ export function QuantityStepper({
           {label}
         </Text>
       ) : null}
-      <Input className="h-11 gap-0 rounded-lg border-border px-0">
+      <Input
+        className={`${
+          compact ? 'h-9' : 'h-11'
+        } gap-0 rounded-lg border-border px-0`}
+      >
         <Pressable
           onPress={decrement}
           disabled={disabled || value <= min}
-          className={`h-11 w-11 items-center justify-center ${
+          className={`${
+            compact ? 'h-9 w-9' : 'h-11 w-11'
+          } items-center justify-center ${
             disabled || value <= min ? 'opacity-40' : ''
           }`}
         >
@@ -81,13 +89,15 @@ export function QuantityStepper({
           onBlur={commitText}
           onSubmitEditing={commitText}
           className="py-0"
-          style={{ flex: 1, height: 44 }}
+          style={{ flex: 1, height: compact ? 36 : 44 }}
         />
 
         <Pressable
           onPress={increment}
           disabled={disabled || value >= max}
-          className={`h-11 w-11 items-center justify-center ${
+          className={`${
+            compact ? 'h-9 w-9' : 'h-11 w-11'
+          } items-center justify-center ${
             disabled || value >= max ? 'opacity-40' : ''
           }`}
         >

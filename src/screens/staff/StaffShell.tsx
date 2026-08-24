@@ -43,7 +43,7 @@ export function StaffShell({ children }: StaffShellProps) {
   return (
     <SafeAreaView style={{ flex: 1 }} className="bg-background">
       <Box style={{ flex: 1 }} className="flex-col">
-        <HStack className="items-center justify-between border-b border-border px-4 py-2">
+        <HStack className="items-center justify-between border-b border-border bg-background px-4 py-2">
           <HStack space="sm" className="items-center">
             <Box className="h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Text size="sm" bold className="text-primary-foreground">
@@ -78,7 +78,9 @@ export function StaffShell({ children }: StaffShellProps) {
 
         <NetworkBanner />
 
-        <Box style={{ flex: 1 }}>{children}</Box>
+        <Box style={{ flex: 1 }} className="bg-background">
+          {children}
+        </Box>
 
         <HStack className="flex-shrink-0 border-t border-border bg-card px-2 py-1">
           {NAV_ITEMS.map((item) => {

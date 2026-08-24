@@ -118,10 +118,11 @@ describe('buildReceiptSummary', () => {
     expect(summary.paymentAmount).toBe(300);
   });
 
-  it('derives previous balance correctly', () => {
-    // new_balance = previous_balance + sales_total - payment
-    // previous_balance = new_balance - sales_total + payment
-    // 1475 - 775 + 300 = 1000
+  it('derives previous balance correctly (cash-flow convention)', () => {
+    // Cash-flow convention ("+ means we got money"):
+    //   newBalance      = branch.currentBalance = 1475
+    //   previousBalance = currentBalance + sales - payment
+    //                   = 1475 + 775 - 300 = 1950
     const summary = buildReceiptSummary({
       delivery: makeDelivery(),
       items: makeItems(),
@@ -130,7 +131,7 @@ describe('buildReceiptSummary', () => {
       branch: makeBranch(),
     });
 
-    expect(summary.previousBalance).toBe(1000);
+    expect(summary.previousBalance).toBe(1950);
     expect(summary.newBalance).toBe(1475);
   });
 
@@ -143,8 +144,8 @@ describe('buildReceiptSummary', () => {
       branch: makeBranch(),
     });
 
-    // previous = 1475 - (-850) + 300 = 2625
-    expect(summary.previousBalance).toBe(2625);
+    // previous = 1475 + (-850) - 300 = 325
+    expect(summary.previousBalance).toBe(325);
   });
 
   it('uses fallback name for unknown products', () => {

@@ -10,7 +10,7 @@ import { useReceiptDraftStore } from '@/store/receiptDraft';
 export function useEditPrefill(editingDeliveryId: string | null) {
   const applyPath = useReceiptDraftStore((s) => s.applyPath);
   const setDate = useReceiptDraftStore((s) => s.setDate);
-  const setQuantities = useReceiptDraftStore((s) => s.setQuantities);
+  const setEntries = useReceiptDraftStore((s) => s.setEntries);
   const setPaymentAmount = useReceiptDraftStore((s) => s.setPaymentAmount);
 
   const delivery = useDelivery(editingDeliveryId);
@@ -37,15 +37,19 @@ export function useEditPrefill(editingDeliveryId: string | null) {
     });
     setDate(deliveryData.date);
 
-    const quantities: Record<string, number> = {};
+    const entries: Record<string, { delivered: number; returned: number }> = {};
     for (const item of deliveryData.items) {
-      quantities[item.productId] = item.deliveredQuantity;
+      if (item.deliveredQuantity === 0 && item.returnedQuantity === 0) continue;
+      entries[item.productId] = {
+        delivered: item.deliveredQuantity,
+        returned: item.returnedQuantity,
+      };
     }
-    setQuantities(quantities);
+    setEntries(entries);
 
     const payment = deliveryData.payments.reduce((sum, p) => sum + p.amount, 0);
     setPaymentAmount(payment);
-  }, [editingDeliveryId, delivery.data, branch.data, applyPath, setDate, setQuantities, setPaymentAmount]);
+  }, [editingDeliveryId, delivery.data, branch.data, applyPath, setDate, setEntries, setPaymentAmount]);
 
   return { delivery, branch };
 }

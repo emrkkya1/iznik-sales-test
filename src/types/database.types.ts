@@ -580,6 +580,10 @@ export type Database = {
         Args: { p_branch_id: string }
         Returns: Json
       }
+      list_deliveries_with_payments: {
+        Args: { p_branch_id: string; p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       list_branches_with_context: {
         Args: { p_district_id: string }
         Returns: Json

@@ -56,11 +56,12 @@ export function StaffHomeScreen() {
     () =>
       computeReceiptPreview(
         products,
-        draft.quantities,
+        draft.entries,
         draft.paymentAmount,
+        // DB now stores cash in hand directly (cash-flow convention).
         branchBalance.data ?? 0,
       ),
-    [products, draft.quantities, draft.paymentAmount, branchBalance.data],
+    [products, draft.entries, draft.paymentAmount, branchBalance.data],
   );
 
   const branchName =
@@ -76,12 +77,14 @@ export function StaffHomeScreen() {
     setGridWidth(e.nativeEvent.layout.width);
   };
 
-  const items = Object.entries(draft.quantities)
-    .filter(([, quantity]) => quantity > 0)
-    .map(([productId, deliveredQuantity]) => ({
+  const items = Object.entries(draft.entries)
+    .filter(
+      ([, entry]) => entry.delivered > 0 || entry.returned > 0,
+    )
+    .map(([productId, entry]) => ({
       productId,
-      deliveredQuantity,
-      returnedQuantity: 0,
+      deliveredQuantity: entry.delivered,
+      returnedQuantity: entry.returned,
     }));
 
   const canSubmit = !!draft.branchId && items.length > 0;
@@ -123,7 +126,7 @@ export function StaffHomeScreen() {
 
   const cancelEdit = () => {
     draft.setEditingDeliveryId(null);
-    draft.reset();
+    draft.clear();
     setPhase(1);
   };
 
@@ -184,7 +187,7 @@ export function StaffHomeScreen() {
   }
 
   return (
-    <Box style={{ flex: 1 }} className="p-4">
+    <Box style={{ flex: 1 }} className="bg-background p-4">
       <VStack space="sm" style={{ flex: 1 }}>
         {isEditing ? (
           <HStack className="items-center justify-between rounded-lg bg-info px-4 py-2">
@@ -257,19 +260,29 @@ export function StaffHomeScreen() {
                       padding: GRID_PADDING,
                     }}
                   >
-                    {products.map((product) => (
-                      <Box key={product.productId} style={{ width: cardWidth }}>
-                        <ProductCard
-                          name={product.productName}
-                          imageUrl={product.productImageUrl}
-                          price={product.currentPrice}
-                          quantity={draft.quantities[product.productId] ?? 0}
-                          onQuantityChange={(quantity) =>
-                            draft.setQuantity(product.productId, quantity)
-                          }
-                        />
-                      </Box>
-                    ))}
+                    {products.map((product) => {
+                      const entry = draft.entries[product.productId] ?? {
+                        delivered: 0,
+                        returned: 0,
+                      };
+                      return (
+                        <Box key={product.productId} style={{ width: cardWidth }}>
+                          <ProductCard
+                            name={product.productName}
+                            imageUrl={product.productImageUrl}
+                            price={product.currentPrice}
+                            delivered={entry.delivered}
+                            returned={entry.returned}
+                            onDeliveredChange={(quantity) =>
+                              draft.setDelivered(product.productId, quantity)
+                            }
+                            onReturnedChange={(quantity) =>
+                              draft.setReturned(product.productId, quantity)
+                            }
+                          />
+                        </Box>
+                      );
+                    })}
                   </ScrollView>
                 )}
               </Box>

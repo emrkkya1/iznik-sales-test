@@ -34,7 +34,6 @@ export {
   useOpeningBalancesLocked,
   useBranchHubDetails,
   useBranchHubSummary,
-  useBranchMovements,
   useBranchMovementsInfinite,
   useCreateCity,
   useCreateDistrict,

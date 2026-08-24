@@ -4,11 +4,12 @@ import { useRouter } from 'expo-router';
 
 import { Amount } from '@/components/ui/amount';
 import { Box } from '@/components/ui/box';
-import { Button, ButtonText } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { HStack } from '@/components/ui/hstack';
+import { Icon, ChevronRightIcon } from '@/components/ui/icon';
+import { Pressable } from '@/components/ui/pressable';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
@@ -54,11 +55,18 @@ export function StaffHistoryScreen() {
   const items = deliveries.data ?? [];
 
   return (
-    <Box style={{ flex: 1 }}>
+    <Box style={{ flex: 1 }} className="bg-background">
       <FlatList
         data={items}
         keyExtractor={(d) => d.id}
-        contentContainerStyle={{ padding: 16, gap: 12 }}
+        style={{ backgroundColor: '#FFFFFF' }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingTop: 8,
+          paddingBottom: 24,
+          backgroundColor: '#FFFFFF',
+        }}
+        ItemSeparatorComponent={null}
         ListEmptyComponent={
           <EmptyState
             title="Bugün kayıt yok"
@@ -68,36 +76,49 @@ export function StaffHistoryScreen() {
         renderItem={({ item }) => {
           const editable = canEditDelivery(item.date);
           return (
-            <HStack className="items-center justify-between rounded-xl border border-border bg-card p-4">
-              <VStack space="xs">
-                <Text size="sm" bold className="text-foreground">
+            <Pressable
+              onPress={editable ? () => setPending(item) : undefined}
+              disabled={!editable}
+              accessibilityRole={editable ? 'button' : undefined}
+              className="flex-row items-center justify-between border-b border-border py-4"
+            >
+              <VStack space="xs" className="flex-1 pr-3">
+                <Text
+                  size="md"
+                  bold
+                  numberOfLines={1}
+                  className="text-foreground"
+                >
                   {item.branchName}
                 </Text>
-                <Text size="xs" className="text-muted-foreground">
-                  {formatTime(item.createdAt)}
-                </Text>
+                <HStack space="sm" className="items-center">
+                  <Text size="xs" className="text-muted-foreground">
+                    {formatTime(item.createdAt)}
+                  </Text>
+                  {editable ? null : (
+                    <>
+                      <Text size="xs" className="text-muted-foreground">
+                        ·
+                      </Text>
+                      <Text size="xs" className="text-muted-foreground">
+                        Düzenleme kapandı
+                      </Text>
+                    </>
+                  )}
+                </HStack>
               </VStack>
 
-              <HStack space="lg" className="items-center">
-                <VStack space="xs" className="items-end">
-                  <Amount size="sm" bold value={item.totalSalesAmount} />
-                  {editable ? null : (
-                    <Text size="xs" className="text-muted-foreground">
-                      Düzenleme kapandı
-                    </Text>
-                  )}
-                </VStack>
+              <HStack space="sm" className="items-center">
+                <Amount size="md" bold value={item.totalSalesAmount} />
                 {editable ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onPress={() => setPending(item)}
-                  >
-                    <ButtonText>Düzenle</ButtonText>
-                  </Button>
+                  <Icon
+                    as={ChevronRightIcon}
+                    size="md"
+                    className="text-muted-foreground"
+                  />
                 ) : null}
               </HStack>
-            </HStack>
+            </Pressable>
           );
         }}
       />

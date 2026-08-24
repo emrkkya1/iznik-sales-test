@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { Amount } from '@/components/ui/amount';
 import { Box } from '@/components/ui/box';
@@ -12,7 +12,9 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useBranchMovementsInfinite } from '@/hooks';
+import type { MovementRow } from '@/types';
 import { formatDateForDisplay } from '@/utils/dates';
+import { formatCurrency } from '@/utils/formatters';
 
 import { MovementDetailSheet } from '../../../components/admin/MovementDetailSheet';
 
@@ -22,45 +24,36 @@ type MovementsTabProps = {
 
 const LIMIT = 50;
 
-type MovementItem = {
-  id: string;
-  kind: 'delivery' | 'payment';
-  date: string;
-  amount: number;
-  paymentType: string | null;
-  isDeleted: boolean;
-  createdAt: string;
-};
-
-type MovementsPage = {
-  deliveries: {
-    id: string;
-    date: string;
-    amount: number;
-    paymentType: string | null;
-    isDeleted: boolean;
-    createdAt: string;
-  }[];
-  payments: {
-    id: string;
-    date: string;
-    amount: number;
-    paymentType: string | null;
-    isDeleted: boolean;
-    createdAt: string;
-  }[];
-};
-
 function Row({
   item,
   onPress,
 }: {
-  item: MovementItem;
+  item: MovementRow;
   onPress: () => void;
 }) {
   const isDelivery = item.kind === 'delivery';
   const icon = isDelivery ? TruckIcon : BanknoteIcon;
   const title = isDelivery ? 'Teslimat' : 'Tahsilat';
+
+  // Top amount (cash-flow convention, "+ means we got money"):
+  //   Delivery  → NET = Alınan - Verilen. Positive when the customer paid
+  //                more than the products were worth (overpayment — we have
+  //                cash in hand); negative when products exceed payment
+  //                (we're missing cash). No tone is applied; the leading "-"
+  //                from formatCurrency tells the story on its own.
+  //   Payment   → just the payment amount; standalone payments have no
+  //                Verilen side, so NET would be a meaningless negative.
+  const alinanForDelivery = isDelivery && item.payment ? item.payment.amount : 0;
+  const netAmount = isDelivery ? alinanForDelivery - item.amount : item.amount;
+
+  // Subtitle row:
+  //   Delivery  → both labels visible when an embedded payment exists;
+  //                "Verilen" alone when there is none.
+  //   Payment   → only "Alınan" (it's the same number as the top amount,
+  //                but it keeps the row's visual rhythm consistent).
+  const verilenValue = isDelivery ? item.amount : null;
+  const alinanValue =
+    isDelivery && item.payment ? item.payment.amount : !isDelivery ? item.amount : null;
 
   return (
     <Pressable
@@ -87,57 +80,43 @@ function Row({
           </Text>
         </VStack>
       </HStack>
-      <Amount
-        size="sm"
-        value={item.amount}
-        tone={isDelivery ? 'default' : 'info'}
-      />
+      <VStack space="xs" className="items-end">
+        <Amount size="sm" value={netAmount} />
+        {(verilenValue !== null || alinanValue !== null) ? (
+          <HStack space="sm">
+            {verilenValue !== null ? (
+              <Text size="xs">
+                <Text size="xs" className="text-muted-foreground">
+                  Verilen:{' '}
+                </Text>
+                <Text size="xs" className="text-foreground">
+                  {formatCurrency(verilenValue)}
+                </Text>
+              </Text>
+            ) : null}
+            {alinanValue !== null ? (
+              <Text size="xs">
+                <Text size="xs" className="text-muted-foreground">
+                  Alınan:{' '}
+                </Text>
+                <Text size="xs" className="text-info">
+                  {formatCurrency(alinanValue)}
+                </Text>
+              </Text>
+            ) : null}
+          </HStack>
+        ) : null}
+      </VStack>
     </Pressable>
   );
-}
-
-function flattenPages(pages: MovementsPage[]): MovementItem[] {
-  const items: MovementItem[] = [];
-  for (const page of pages) {
-    for (const d of page.deliveries) {
-      items.push({
-        id: d.id,
-        kind: 'delivery',
-        date: d.date,
-        amount: d.amount,
-        paymentType: d.paymentType,
-        isDeleted: d.isDeleted,
-        createdAt: d.createdAt,
-      });
-    }
-    for (const p of page.payments) {
-      items.push({
-        id: p.id,
-        kind: 'payment',
-        date: p.date,
-        amount: p.amount,
-        paymentType: p.paymentType,
-        isDeleted: p.isDeleted,
-        createdAt: p.createdAt,
-      });
-    }
-  }
-  return items.sort((a, b) => {
-    const cmp = b.date.localeCompare(a.date);
-    if (cmp !== 0) return cmp;
-    return b.createdAt.localeCompare(a.createdAt);
-  });
 }
 
 export function MovementsTab({ branchId }: MovementsTabProps) {
   const infinite = useBranchMovementsInfinite(branchId, LIMIT);
 
-  const items = useMemo(
-    () => flattenPages(infinite.data?.pages ?? []),
-    [infinite.data?.pages],
-  );
+  const items: MovementRow[] = infinite.data?.pages.flat() ?? [];
 
-  const [selected, setSelected] = useState<MovementItem | null>(null);
+  const [selected, setSelected] = useState<MovementRow | null>(null);
 
   if (infinite.isLoading) {
     return <Spinner label="Hareketler yükleniyor…" />;

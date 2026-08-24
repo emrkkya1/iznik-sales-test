@@ -89,29 +89,6 @@ export function useBranchHubDetails(branchId: string | null | undefined) {
   });
 }
 
-export function useBranchMovements(
-  branchId: string | null | undefined,
-  limit = 50,
-  offset = 0,
-) {
-  return useQuery({
-    queryKey: ['admin', 'branch-movements', branchId, limit, offset],
-    queryFn: instrumentQuery(
-      'list_branch_movements',
-      () =>
-        services.adminLocations.listBranchMovements(
-          branchId as string,
-          limit,
-          offset,
-        ),
-      summarizeResult,
-    ),
-    enabled: !!branchId,
-    staleTime: TRANSACTIONAL_STALE_MS,
-    placeholderData: keepPreviousData,
-  });
-}
-
 // PR-6.2: useInfiniteQuery variant for paginated "load more" UX on the
 // Branch Hub Hareketler tab. Each page is cached under the same key so
 // flipping between tabs preserves loaded pages.
@@ -122,18 +99,19 @@ export function useBranchMovementsInfinite(
   return useInfiniteQuery({
     queryKey: ['admin', 'branch-movements', branchId, limit],
     initialPageParam: 0,
-    queryFn: ({ pageParam }) =>
-      services.adminLocations.listBranchMovements(
-        branchId as string,
-        limit,
-        pageParam,
-      ),
+    queryFn: instrumentQuery(
+      'list_deliveries_with_payments',
+      (ctx) =>
+        services.adminLocations.listDeliveriesWithPayments(
+          branchId as string,
+          limit,
+          (ctx?.pageParam as number | undefined) ?? 0,
+        ),
+      summarizeResult,
+    ),
     staleTime: TRANSACTIONAL_STALE_MS,
     getNextPageParam: (lastPage, _allPages, lastPageParam) => {
-      const deliveries = lastPage?.deliveries?.length ?? 0;
-      const payments = lastPage?.payments?.length ?? 0;
-      const total = deliveries + payments;
-      if (total < limit) return undefined;
+      if (!lastPage || lastPage.length < limit) return undefined;
       return lastPageParam + limit;
     },
   });
