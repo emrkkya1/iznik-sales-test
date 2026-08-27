@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { FlatList, type ListRenderItem } from 'react-native';
 
 import { Box } from '@/components/ui/box';
@@ -36,6 +36,17 @@ export type DataTableProps<T> = {
   onRefresh?: () => void;
   refreshing?: boolean;
   className?: string;
+  /**
+   * Rendered as the FlatList's ListHeaderComponent — typically the filter
+   * bar / search input. Putting it inside the FlatList (instead of wrapping
+   * the DataTable in a plain ScrollView) avoids the "VirtualizedLists nested
+   * in plain ScrollViews" warning and keeps windowing working on Android.
+   */
+  header?: ReactNode;
+  /** Extra content appended after the last row (e.g. load-more footer). */
+  footer?: ReactNode;
+  /** Pixel padding around the whole list (replaces the parent ScrollView). */
+  contentPadding?: number;
 };
 
 function flexStyleFor(flex: number | undefined) {
@@ -68,6 +79,9 @@ export const DataTable = (<T,>(props: DataTableProps<T>) => {
     onEndReached,
     refreshing = false,
     className,
+    header,
+    footer,
+    contentPadding = 0,
   } = props;
   const renderRow: ListRenderItem<T> = useMemo(
     () =>
@@ -128,7 +142,13 @@ export const DataTable = (<T,>(props: DataTableProps<T>) => {
           onEndReached={onEndReached}
           onEndReachedThreshold={0.4}
           refreshing={refreshing}
-          ListHeaderComponent={null}
+          ListHeaderComponent={header as ReactElement | null}
+          ListFooterComponent={footer as ReactElement | null}
+          contentContainerStyle={
+            contentPadding
+              ? { padding: contentPadding }
+              : undefined
+          }
           removeClippedSubviews={false}
           initialNumToRender={20}
           windowSize={7}
