@@ -10,8 +10,8 @@ import { Icon, MoreVerticalIcon } from '@/components/ui/icon';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { useBranchHubSummary, useSetBranchActive } from '@/hooks';
-import { formatDateForDisplay } from '@/utils/dates';
 import { formatRelativeDate } from '@/utils/formatRelativeDate';
+import { formatCount } from '@/utils/formatCount';
 
 import { ActiveBadge } from '../../components/admin/ActiveBadge';
 import { SummaryCard } from '../../components/admin/SummaryCard';
@@ -120,33 +120,28 @@ export function BranchHubScreen() {
             isLoading={isLoading}
           />
           <SummaryCard
-            title="Aktif Ürün"
-            value={
-              data
-                ? `${data.activeProductCount} / ${data.totalProductCount}`
-                : null
+            title="Verilen - Alınan"
+            value={data?.deliveredQty ?? null}
+            format="quantity-delta"
+            secondaryValue={
+              data && data.returnedQty > 0
+                ? `${formatCount(data.returnedQty)} alınan`
+                : undefined
             }
-            format="text"
+            secondaryTone="destructive"
+            isLoading={isLoading}
+          />
+          <SummaryCard
+            title="İade Oranı"
+            value={data?.returnRate ?? null}
+            format="percent"
+            emptyLabel="Veri yok"
             isLoading={isLoading}
           />
           <SummaryCard
             title="Son İşlem"
             value={formatRelativeDate(data?.lastMovementDate ?? null)}
             format="text"
-            isLoading={isLoading}
-          />
-          <SummaryCard
-            title="Açılış Bakiyesi"
-            // DB stores cash in hand at branch creation (cash-flow
-            // convention: positive = cash in hand from this branch at open).
-            value={data?.openingBalance ?? null}
-            format="currency"
-            showBalanceTone
-            subtitle={
-              typeof data?.branchCreatedAt === 'string' && data.branchCreatedAt
-                ? `${formatDateForDisplay(data.branchCreatedAt)}'ten beri`
-                : undefined
-            }
             isLoading={isLoading}
           />
         </HStack>

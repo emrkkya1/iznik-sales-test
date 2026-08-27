@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { ReactElement } from 'react';
 import { FlatList, type ListRenderItem } from 'react-native';
 
 import { Box } from '@/components/ui/box';
@@ -21,8 +22,8 @@ export type DataTableColumn<T> = {
 };
 
 export type DataTableProps<T> = {
-  columns: ReadonlyArray<DataTableColumn<T>>;
-  rows: ReadonlyArray<T>;
+  columns: readonly DataTableColumn<T>[];
+  rows: readonly T[];
   keyExtractor: (row: T) => string;
   onRowPress?: (row: T) => void;
   /** Server-driven sort state — used to paint up/down indicators on headers. */
@@ -53,23 +54,24 @@ function alignClass(align: 'left' | 'right' | 'center' | undefined) {
 //
 // Sort is server-driven: the parent owns sort state and `onSortChange`
 // re-queries the source. Indicator on the header is purely visual.
-export function DataTable<T>({
-  columns,
-  rows,
-  keyExtractor,
-  onRowPress,
-  sort,
-  onSortChange,
-  isLoading = false,
-  emptyTitle = 'Veri yok',
-  emptySubtitle,
-  onEndReached,
-  refreshing = false,
-  className,
-}: DataTableProps<T>) {
+export const DataTable = (<T,>(props: DataTableProps<T>) => {
+  const {
+    columns,
+    rows,
+    keyExtractor,
+    onRowPress,
+    sort,
+    onSortChange,
+    isLoading = false,
+    emptyTitle = 'Veri yok',
+    emptySubtitle,
+    onEndReached,
+    refreshing = false,
+    className,
+  } = props;
   const renderRow: ListRenderItem<T> = useMemo(
     () =>
-      ({ item }) => {
+      function renderRow({ item }: { item: T }) {
         const content = (
           <HStack className="items-center border-b border-border px-4 py-3">
             {columns.map((col) => (
@@ -134,7 +136,9 @@ export function DataTable<T>({
       )}
     </Box>
   );
-}
+}) as <T>(props: DataTableProps<T>) => ReactElement;
+
+(DataTable as unknown as { displayName: string }).displayName = 'DataTable';
 
 // Re-export the SortState type for parents.
 export type { SortState };

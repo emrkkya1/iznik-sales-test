@@ -8,10 +8,10 @@ import type { DayOfWeek } from '@/types';
 // Display order is weekly (Monday → Sunday) because that's how operators
 // think. The `value` field maps to JS Date.getDay() (0=Sun..6=Sat) so the
 // array can be passed straight to the RPC.
-export const DAYS_OF_WEEK: ReadonlyArray<{
+export const DAYS_OF_WEEK: readonly {
   value: DayOfWeek;
   short: string;
-}> = [
+}[] = [
   { value: 1, short: 'Pt' }, // Pazartesi
   { value: 2, short: 'Sa' }, // Salı
   { value: 3, short: 'Ça' }, // Çarşamba

@@ -129,7 +129,7 @@ export function BranchesTableScreen() {
     [],
   );
 
-  const columns: ReadonlyArray<DataTableColumn<BranchAnalyticsRow>> =
+  const columns: readonly DataTableColumn<BranchAnalyticsRow>[] =
     useMemo(
       () => [
         {

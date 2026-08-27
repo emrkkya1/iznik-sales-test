@@ -11,7 +11,7 @@ export type SortState = {
 } | null;
 
 type DataTableHeaderProps<T> = {
-  columns: ReadonlyArray<DataTableColumn<T>>;
+  columns: readonly DataTableColumn<T>[];
   sort: SortState;
   onSortChange?: (columnKey: string, direction: 'asc' | 'desc') => void;
 };
