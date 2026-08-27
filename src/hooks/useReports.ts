@@ -45,6 +45,32 @@ export function useBranchDistribution(range: SummaryRange) {
   });
 }
 
+export function useBranchIncome(range: SummaryRange) {
+  return useQuery({
+    queryKey: ['reports', 'distribution', 'branch-income', range],
+    queryFn: instrumentQuery(
+      'report_branch_income',
+      () => services.reports.getBranchIncome(range),
+      summarizeResult,
+    ),
+    staleTime: STALE_TIME_MS,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useBranchReturnRate(range: SummaryRange) {
+  return useQuery({
+    queryKey: ['reports', 'distribution', 'branch-return-rate', range],
+    queryFn: instrumentQuery(
+      'report_branch_return_rate',
+      () => services.reports.getBranchReturnRate(range),
+      summarizeResult,
+    ),
+    staleTime: STALE_TIME_MS,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function useDailySeries(range: SummaryRange) {
   return useQuery({
     queryKey: ['reports', 'daily-series', range],

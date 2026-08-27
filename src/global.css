@@ -53,6 +53,19 @@
        warm cream and reserved for cream-tinted surfaces. */
     --surface-muted: 241 243 245; /* #F1F3F5 */
     --surface-muted-foreground: 71 85 105; /* #475569 */
+
+    /* Chart palette — categorical hues for pie / bar / line series.
+       Order is curated: brand-emphasizing hues first, then supporting tones.
+       `chart-7` is neutral to balance multi-slice pies that need a "Diğer" tone. */
+    --chart-1: 106 71 21;   /* #6A4715 — primary brown */
+    --chart-2: 0 76 110;    /* #004C6E — secondary navy */
+    --chart-3: 0 96 147;    /* #006093 — info */
+    --chart-4: 60 116 156;  /* #3C749C — info-soft */
+    --chart-5: 133 101 61;  /* #85653D — muted-foreground */
+    --chart-6: 196 52 40;   /* #C43428 — destructive */
+    --chart-7: 114 78 28;   /* #724E1C — ring (neutral brown) */
+    --chart-axis: 229 220 205; /* #E5DCCD — border */
+    --chart-label: 133 101 61; /* #85653D — muted-foreground */
   }
 
   /* ─── Future dark theme (placeholder) ──────────────────────────
@@ -89,6 +102,19 @@
   --color-info-soft-foreground: rgb(var(--info-soft-foreground));
   --color-surface-muted: rgb(var(--surface-muted));
   --color-surface-muted-foreground: rgb(var(--surface-muted-foreground));
+
+  /* Chart palette — consumed as `bg-chart-1`, `text-chart-1`, etc.
+     Charts must pass these as string props (not className) because SVG
+     fill / stroke can't read Tailwind utilities. */
+  --color-chart-1: rgb(var(--chart-1));
+  --color-chart-2: rgb(var(--chart-2));
+  --color-chart-3: rgb(var(--chart-3));
+  --color-chart-4: rgb(var(--chart-4));
+  --color-chart-5: rgb(var(--chart-5));
+  --color-chart-6: rgb(var(--chart-6));
+  --color-chart-7: rgb(var(--chart-7));
+  --color-chart-axis: rgb(var(--chart-axis));
+  --color-chart-label: rgb(var(--chart-label));
 
   /* Typography — Plus Jakarta Sans (embedded at build time via expo-font plugin) */
   --font-body: PlusJakartaSans_400Regular;

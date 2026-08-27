@@ -2,6 +2,8 @@ import type {
   ActivateBranchProductInput,
   AuthSession,
   Branch,
+  BranchAnalyticsFilters,
+  BranchAnalyticsPage,
   BranchHubDetails,
   BranchLocation,
   BranchProductWithPrice,
@@ -104,7 +106,20 @@ export interface ReportsRepository {
   getKpis(range: SummaryRange): Promise<SummaryKpis>;
   getProductDistribution(range: SummaryRange): Promise<DistributionRow[]>;
   getBranchDistribution(range: SummaryRange): Promise<DistributionRow[]>;
+  getBranchIncome(range: SummaryRange): Promise<DistributionRow[]>;
+  getBranchReturnRate(range: SummaryRange): Promise<DistributionRow[]>;
   getDailySeries(range: SummaryRange): Promise<DailySeriesResult>;
+}
+
+export interface AnalyticsRepository {
+  /**
+   * Paginated, filterable, sortable branches list for the Şubeler table.
+   * Returns one page plus the unpaginated total count for "showing X of Y".
+   */
+  listBranches(
+    filters: BranchAnalyticsFilters,
+    pagination: { limit: number; offset: number },
+  ): Promise<BranchAnalyticsPage>;
 }
 
 export interface AppServices {
@@ -117,4 +132,5 @@ export interface AppServices {
   ledger: LedgerRepository;
   adminLocations: AdminLocationRepository;
   reports: ReportsRepository;
+  analytics: AnalyticsRepository;
 }
