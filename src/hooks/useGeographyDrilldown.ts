@@ -7,9 +7,11 @@ function pickFirst(v: string | string[] | undefined): string | null {
   return Array.isArray(v) ? (v[0] ?? null) : v;
 }
 
-// Parses /branches?city=...&district=... query params into a 3-state level +
+// Parses /cities?city=...&district=... query params into a 3-state level +
 // selected ids. Expo Router 57 returns params as `string | string[] |
-// undefined` — pickFirst normalizes.
+// undefined` — pickFirst normalizes. (Was /branches in PR-6.1; renamed
+// when the Şubeler tab took ownership of /branches for the flat analytics
+// table.)
 export function useGeographyDrilldown() {
   const params = useLocalSearchParams<{
     city?: string | string[];

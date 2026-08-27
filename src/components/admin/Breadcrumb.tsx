@@ -63,7 +63,7 @@ export function Breadcrumb({ level, cityName, districtName }: BreadcrumbProps) {
         <HStack space="sm" className="items-center">
           <LinkCrumb
             label="Şehirler"
-            onPress={() => router.push('/branches')}
+            onPress={() => router.push('/cities')}
           />
           <Separator />
           <CurrentCrumb label={cityName ?? '…'} />
@@ -79,7 +79,7 @@ export function Breadcrumb({ level, cityName, districtName }: BreadcrumbProps) {
       <HStack space="sm" className="items-center">
         <LinkCrumb
           label="Şehirler"
-          onPress={() => router.push('/branches')}
+          onPress={() => router.push('/cities')}
         />
         <Separator />
         <LinkCrumb
