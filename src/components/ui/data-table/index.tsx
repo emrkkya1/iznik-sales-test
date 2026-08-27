@@ -116,6 +116,7 @@ export const DataTable = (<T,>(props: DataTableProps<T>) => {
 
   return (
     <Box
+      style={{ flex: 1 }}
       className={`overflow-hidden rounded-2xl border border-border bg-card ${
         className ?? ''
       }`}
@@ -136,6 +137,7 @@ export const DataTable = (<T,>(props: DataTableProps<T>) => {
         </Box>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={rows as unknown as T[]}
           keyExtractor={keyExtractor}
           renderItem={renderRow}

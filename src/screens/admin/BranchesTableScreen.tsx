@@ -127,9 +127,9 @@ export function BranchesTableScreen() {
     [],
   );
 
-  const headerSection = useMemo(
+  const filterSection = useMemo(
     () => (
-      <VStack space="md" className="px-6 pb-4 pt-4">
+      <VStack space="md" className="px-6 pb-3 pt-4">
         <VStack space="xs">
           <Text size="xl" bold className="text-foreground">
             Şubeler
@@ -338,33 +338,35 @@ export function BranchesTableScreen() {
 
   return (
     <Box style={{ flex: 1 }} className="bg-background">
-      <DataTable
-        columns={columns}
-        rows={allRows}
-        keyExtractor={(row) => row.branchId}
-        onRowPress={onRowPress}
-        sort={
-          sort
-            ? {
-                columnKey: sort.columnKey,
-                direction: sort.direction,
-              }
-            : null
-        }
-        onSortChange={onSortChange}
-        isLoading={query.isLoading}
-        emptyTitle="Şube bulunamadı"
-        emptySubtitle="Filtreleri değiştirip tekrar deneyin."
-        onEndReached={() => {
-          if (query.hasNextPage && !query.isFetchingNextPage) {
-            void query.fetchNextPage();
+      <VStack space="sm" style={{ flex: 1 }}>
+        <Box>{filterSection}</Box>
+        <DataTable
+          columns={columns}
+          rows={allRows}
+          keyExtractor={(row) => row.branchId}
+          onRowPress={onRowPress}
+          sort={
+            sort
+              ? {
+                  columnKey: sort.columnKey,
+                  direction: sort.direction,
+                }
+              : null
           }
-        }}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
-        header={headerSection}
-        contentPadding={24}
-      />
+          onSortChange={onSortChange}
+          isLoading={query.isLoading}
+          emptyTitle="Şube bulunamadı"
+          emptySubtitle="Filtreleri değiştirip tekrar deneyin."
+          onEndReached={() => {
+            if (query.hasNextPage && !query.isFetchingNextPage) {
+              void query.fetchNextPage();
+            }
+          }}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+          className="mx-6 mb-6"
+        />
+      </VStack>
     </Box>
   );
 }
