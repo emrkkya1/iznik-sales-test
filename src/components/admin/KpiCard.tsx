@@ -14,13 +14,17 @@ export type KpiFormat = 'currency' | 'count' | 'percent' | 'quantity-delta';
 type KpiCardProps = {
   icon: ElementType;
   title: string;
-  value: number | null;
+  value: number | string | null;
   /**
    * How to render `value`:
    *  - `currency`        — ₺1.234
    *  - `count`           — 12.345
    *  - `percent`         — %12,3  (renders "Veri yok" when value is null)
    *  - `quantity-delta`  — big number (uses `secondaryValue` as smaller line)
+   *
+   * When `value` is a string, it is rendered verbatim (after `formatCurrency` /
+   * `formatCount` etc. done by the caller) so multi-token displays like
+   * "12.345 / 142" keep a single shared font + color.
    */
   format: KpiFormat;
   /** Optional small line under the main value (e.g. "142 alınan" for delivered/returned). */
@@ -33,7 +37,8 @@ type KpiCardProps = {
   className?: string;
 };
 
-function renderValue(format: KpiFormat, value: number): string {
+function renderValue(format: KpiFormat, value: number | string): string {
+  if (typeof value === 'string') return value;
   if (format === 'currency') return formatCurrency(value);
   if (format === 'count') return formatCount(value);
   if (format === 'percent') return `%${value.toFixed(1).replace(/\.0$/, '')}`;
@@ -93,9 +98,7 @@ export function KpiCard({
             </Text>
           ) : (
             <Text size="2xl" bold className="text-foreground">
-              {format === 'quantity-delta'
-                ? formatCount(value as number)
-                : renderValue(format, value as number)}
+              {renderValue(format, value as number | string)}
             </Text>
           )}
           {secondaryValue ? (

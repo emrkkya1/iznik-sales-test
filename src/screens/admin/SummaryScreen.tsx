@@ -49,10 +49,10 @@ export function SummaryScreen() {
   const deliveredQty = kpis.data?.deliveredQty ?? null;
   const returnedQty = kpis.data?.returnedQty ?? null;
   const returnRate = kpis.data?.returnRate ?? null;
-  const secondaryForDelivered =
-    returnedQty !== null && deliveredQty !== null
-      ? `${formatCount(returnedQty)} alınan`
-      : undefined;
+  const deliveredReturnedDisplay =
+    deliveredQty !== null && returnedQty !== null
+      ? `${formatCount(deliveredQty)} / ${formatCount(returnedQty)}`
+      : null;
 
   return (
     <Box style={{ flex: 1 }} className="bg-background">
@@ -91,11 +91,9 @@ export function SummaryScreen() {
           />
           <KpiCard
             icon={TruckIcon}
-            title="Verilen - Alınan"
-            value={deliveredQty}
-            format="quantity-delta"
-            secondaryValue={secondaryForDelivered}
-            secondaryTone="destructive"
+            title="Verilen / Alınan"
+            value={deliveredReturnedDisplay}
+            format="count"
             isLoading={kpis.isLoading}
             isError={kpis.isError}
             onRetry={kpis.refetch}
