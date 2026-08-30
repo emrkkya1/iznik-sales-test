@@ -171,9 +171,10 @@ describe('delivery lifecycle RPCs (integration)', () => {
     ids.deliveryId = deliveryId as string;
 
     const afterCreate = await getBranchRow(admin, ids.branchId!);
-    // M15: balance = opening + payments - sales = 0 + 25 - 100 = -75
-    expect(Number(afterCreate?.current_balance)).toBeCloseTo(-75, 2);
-    expect(Number(await getBranchBalance(admin, ids.branchId!))).toBeCloseTo(-75, 2);
+    // Canonical (M20): balance = opening + sales - payments
+    //   = 0 + 100 - 25 = 75 (Alacak: branch owes us 75).
+    expect(Number(afterCreate?.current_balance)).toBeCloseTo(75, 2);
+    expect(Number(await getBranchBalance(admin, ids.branchId!))).toBeCloseTo(75, 2);
 
     const { error: updateError } = await admin.rpc('update_delivery_atomic', {
       p_delivery_id: ids.deliveryId!,
@@ -184,8 +185,9 @@ describe('delivery lifecycle RPCs (integration)', () => {
     ids.updatedDeliveryId = ids.deliveryId;
 
     const afterUpdate = await getBranchRow(admin, ids.branchId!);
-    // net = 6 * 10 = 60 sales; payment still 25; balance = 0 + 25 - 60 = -35
-    expect(Number(afterUpdate?.current_balance)).toBeCloseTo(-35, 2);
+    // net = 6 * 10 = 60 sales; payment still 25.
+    // canonical: 0 + 60 - 25 = 35 (Alacak).
+    expect(Number(afterUpdate?.current_balance)).toBeCloseTo(35, 2);
   });
 
   it('replays create_delivery_atomic with the same idempotency key without double-inserting', async () => {

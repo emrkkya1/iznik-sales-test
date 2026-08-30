@@ -60,6 +60,8 @@ describe('Delivery Formulas', () => {
 
   describe('new_balance', () => {
     it('should calculate new_balance = previous_balance + sales - payments', () => {
+      // Canonical (M20): a delivery grows the receivable, a payment
+      // shrinks it.
       const previousBalance = 1000;
       const salesTotal = 500;
       const paymentAmount = 300;
@@ -68,7 +70,7 @@ describe('Delivery Formulas', () => {
       expect(newBalance).toBe(1200);
     });
 
-    it('should handle negative balance (credit)', () => {
+    it('should handle negative balance (Borç — net returns exceed deliveries)', () => {
       const previousBalance = 100;
       const salesTotal = -200; // returns exceed deliveries
       const paymentAmount = 0;
@@ -77,7 +79,7 @@ describe('Delivery Formulas', () => {
       expect(newBalance).toBe(-100);
     });
 
-    it('should handle overpayment', () => {
+    it('should handle overpayment (Borç)', () => {
       const previousBalance = 500;
       const salesTotal = 100;
       const paymentAmount = 700; // overpayment

@@ -43,8 +43,8 @@ export function computeReceiptPreview(
   products: BranchProductWithPrice[],
   entries: PreviewEntries | Record<string, number> | undefined,
   paymentAmount: number,
-  // Cash-flow convention ("+ means we got money"). Pass the branch's
-  // cash-in-hand balance from `useBranchBalance` as-is.
+  // Canonical balance convention ("+ means they owe us"). Pass the branch's
+  // current_balance from the DB as-is.
   previousBalance = 0,
 ): ReceiptPreview {
   const normalized = normalize(entries);
@@ -79,10 +79,10 @@ export function computeReceiptPreview(
     lines,
     requiredAmount,
     previousBalance,
-    // Cash-flow convention: "+ means we got money". A delivery reduces
-    // cash in hand by the delivered amount; a payment increases it.
+    // Canonical (M20): a delivery grows the receivable (the branch now owes
+    // us more); a payment shrinks it.
     resultingBalance: round2(
-      previousBalance - requiredAmount + paymentAmount,
+      previousBalance + requiredAmount - paymentAmount,
     ),
   };
 }

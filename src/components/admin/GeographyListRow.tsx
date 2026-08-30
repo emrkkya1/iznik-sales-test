@@ -23,8 +23,10 @@ type GeographyListRowProps = {
   className?: string;
 };
 
-// Positive = "Alacak" (the branch owes us) → info/blue.
-// Negative = "Borç" (we owe the branch) → destructive/red.
+// Canonical balance convention (M20):
+//   positive = Alacak (branch owes us) → info/blue
+//   negative = Borç (we owe branch) → destructive/red
+//   zero     = settled → muted
 const BALANCE_TONE_CLASS: Record<NonNullable<GeographyListRowProps['balanceTone']>, string> = {
   positive: 'text-info',
   negative: 'text-destructive',

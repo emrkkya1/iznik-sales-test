@@ -11,41 +11,46 @@ export function formatDate(value: Date | string): string {
   return new Intl.DateTimeFormat('tr-TR').format(new Date(value));
 }
 
-// Returns a Turkish label clarifying who owes whom for a given balance
-// (cash-flow convention, "+ means we got money"):
-//   value > 0  → "Borç"    — we have more cash in hand from this branch
-//                          than products delivered; we owe the branch
-//   value < 0  → "Alacak"  — products exceed cash received; the branch
-//                          owes us; we will collect
-//   value == 0 → "Bakiye"  — settled; no amount owed either way
-//
-// Use `getBranchBalanceDirection` when you need the full "Şubeden Alacak"
-// / "Şubeye ödenecek" phrasing instead of the short label.
-export function getBalanceTone(value: number): 'Borç' | 'Alacak' | 'Bakiye' {
-  if (value > 0) return 'Borç';
-  if (value < 0) return 'Alacak';
-  return 'Bakiye';
+// Bakiye gösterimi için mutlak tutar. Bakiye tek bir değer olarak sunulur;
+// yön bilgisi etiketten (Alacak/Borç) ve renkten gelir, "+/-" işareti
+// göstermeyiz.
+export function formatBalanceAmount(value: number): string {
+  return currencyFormatter.format(Math.abs(value));
 }
 
-// Returns a Turkish label describing the direction of a branch balance
-// from the company's cash-flow perspective ("+ means we got money"):
-//   value > 0  → "Şubeye ödenecek"   — we have more cash from this branch
-//                                     than products delivered; we owe them
-//   value < 0  → "Şubeden Alacak"    — products exceed cash received; the
-//                                     branch owes us; we will collect
-//   value == 0 → "Şubeden alınacak"  — settled; nothing owed either way
-//
-// `sentenceInitial` controls the first-letter casing. The Ş label sits at
-// the start of the second sentence (capitalized). The ş label is mid-
-// sentence after "iken" (lowercase). Pass `false` to lowercase the first
-// Turkish letter (Ş → ş, Ö → ö, etc.).
+// Bakiye yön etiketi (fırın perspektifinden):
+//   value > 0  → "Alacak"  (şube bize borçlu, tahsil edeceğiz)
+//   value < 0  → "Borç"    (biz şubeye borçluyuz, ödeyeceğiz)
+//   value == 0 → null      (etiket göstermeyiz)
+export function getBalanceLabel(value: number): 'Alacak' | 'Borç' | null {
+  if (value > 0) return 'Alacak';
+  if (value < 0) return 'Borç';
+  return null;
+}
+
+// Bakiye rengi için gluestack semantic token sınıfı:
+//   pozitif → info/mavi, negatif → destructive/kırmızı, sıfır → foreground.
+export function getBalanceColorClass(
+  value: number,
+): 'text-info' | 'text-destructive' | 'text-foreground' {
+  if (value > 0) return 'text-info';
+  if (value < 0) return 'text-destructive';
+  return 'text-foreground';
+}
+
+// Cümle içinde kullanılabilecek uzun bakiye yönü ifadesi.
+//   value > 0  → "Şubeden Alacak"
+//   value < 0  → "Şubeye ödenecek"
+//   value == 0 → "Şubeden alınacak"
+// `sentenceInitial` false yapılırsa Türkçe yerel kurallarına göre
+// cümlenin ortasındaki "ş/ö" küçük harfle başlatılır.
 export function getBranchBalanceDirection(
   value: number,
   sentenceInitial: boolean = true,
 ): string {
   let base: string;
-  if (value > 0) base = 'Şubeye ödenecek';
-  else if (value < 0) base = 'Şubeden Alacak';
+  if (value > 0) base = 'Şubeden Alacak';
+  else if (value < 0) base = 'Şubeye ödenecek';
   else base = 'Şubeden alınacak';
 
   if (sentenceInitial) return base;

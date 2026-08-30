@@ -520,3 +520,27 @@ const MoreVerticalIcon = createIcon({
 });
 MoreVerticalIcon.displayName = 'MoreVerticalIcon';
 export { MoreVerticalIcon };
+
+const FilterIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Path d="M22 3H2L8 10.46V19L16 22V10.46L22 3Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+FilterIcon.displayName = 'FilterIcon';
+export { FilterIcon };
+
+const ChevronDownIcon = createIcon({
+  Root: Svg,
+  viewBox: '0 0 24 24',
+  path: (
+    <>
+      <Polyline points="6 9 12 15 18 9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+});
+ChevronDownIcon.displayName = 'ChevronDownIcon';
+export { ChevronDownIcon };

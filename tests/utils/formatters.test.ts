@@ -1,34 +1,79 @@
 import { describe, it, expect } from 'vitest';
-import { formatCurrency, formatDate } from '@/utils/formatters';
 
-describe('formatters', () => {
-  describe('formatCurrency', () => {
-    it('formats positive amounts in Turkish Lira', () => {
-      expect(formatCurrency(1234.56)).toBe('₺1.234,56');
-    });
+import {
+  formatBalanceAmount,
+  formatCurrency,
+  getBalanceColorClass,
+  getBalanceLabel,
+  getBranchBalanceDirection,
+} from '@/utils/formatters';
 
-    it('formats zero', () => {
-      expect(formatCurrency(0)).toBe('₺0,00');
-    });
-
-    it('formats negative amounts', () => {
-      expect(formatCurrency(-500)).toBe('-₺500,00');
-    });
+describe('formatBalanceAmount', () => {
+  it('renders the positive amount as currency without a sign', () => {
+    expect(formatBalanceAmount(1234.56)).toBe('₺1.234,56');
   });
 
-  describe('formatDate', () => {
-    it('formats date in Turkish locale', () => {
-      const date = new Date('2024-03-15T12:00:00Z');
-      const formatted = formatDate(date);
-      expect(formatted).toMatch(/15/);
-      expect(formatted).toMatch(/03/);
-      expect(formatted).toMatch(/2024/);
-    });
+  it('renders negative balances as their absolute amount', () => {
+    expect(formatBalanceAmount(-500)).toBe('₺500,00');
+  });
 
-    it('accepts string date input', () => {
-      const formatted = formatDate('2024-01-01');
-      expect(formatted).toMatch(/01/);
-      expect(formatted).toMatch(/2024/);
-    });
+  it('renders zero', () => {
+    expect(formatBalanceAmount(0)).toBe('₺0,00');
+  });
+});
+
+describe('getBalanceLabel', () => {
+  it('returns Alacak for positive balances', () => {
+    expect(getBalanceLabel(10)).toBe('Alacak');
+  });
+
+  it('returns Borç for negative balances', () => {
+    expect(getBalanceLabel(-10)).toBe('Borç');
+  });
+
+  it('returns null for zero balance', () => {
+    expect(getBalanceLabel(0)).toBeNull();
+  });
+});
+
+describe('getBalanceColorClass', () => {
+  it('uses info/blue for Alacak (positive)', () => {
+    expect(getBalanceColorClass(10)).toBe('text-info');
+  });
+
+  it('uses destructive/red for Borç (negative)', () => {
+    expect(getBalanceColorClass(-10)).toBe('text-destructive');
+  });
+
+  it('uses foreground for zero', () => {
+    expect(getBalanceColorClass(0)).toBe('text-foreground');
+  });
+});
+
+describe('getBranchBalanceDirection', () => {
+  it('renders the long Alacak phrasing', () => {
+    expect(getBranchBalanceDirection(120)).toBe('Şubeden Alacak');
+  });
+
+  it('renders the long Borç phrasing', () => {
+    expect(getBranchBalanceDirection(-25)).toBe('Şubeye ödenecek');
+  });
+
+  it('renders the settled phrasing for zero', () => {
+    expect(getBranchBalanceDirection(0)).toBe('Şubeden alınacak');
+  });
+
+  it('lowercases the first letter when sentenceInitial is false', () => {
+    expect(getBranchBalanceDirection(-25, false)).toBe('şubeye ödenecek');
+  });
+});
+
+describe('formatCurrency', () => {
+  it('preserves the negative sign for non-balance uses', () => {
+    expect(formatCurrency(-123.45)).toBe('-₺123,45');
+  });
+
+  it('formats positive values', () => {
+    expect(formatCurrency(50)).toBe('₺50,00');
   });
 });

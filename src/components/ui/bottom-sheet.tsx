@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  type DimensionValue,
+  Modal,
+  Pressable,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
 
 import { Box } from './box';
 import { Button, ButtonText } from './button';
@@ -12,8 +17,8 @@ type BottomSheetProps = {
   title: string;
   onClose: () => void;
   children: ReactNode;
-  // Caps the sheet height so it never grows past this. Defaults to a generous
-  // value that fits the tablet landscape with header + body + footer.
+  // Caps the sheet height. Defaults to viewport height so the sheet
+  // fills the available space when `topOffset` is set.
   maxHeight?: number;
   // When true, wraps children in a ScrollView so content scrolls inside the
   // sheet when it overflows. Set false when the consumer needs its own
@@ -21,6 +26,10 @@ type BottomSheetProps = {
   scrollable?: boolean;
   // Optional padding for the content container. Defaults to 24px all sides.
   contentPadding?: number;
+  // Pushes the sheet up from the bottom so dropdown popovers anchored
+  // below their triggers have more visible space. Accepts any RN
+  // DimensionValue ('12%', 80, etc.).
+  topOffset?: DimensionValue;
 };
 
 // Shared bottom-sheet primitive.
@@ -30,18 +39,45 @@ type BottomSheetProps = {
 //   - Title on the left, "Kapat" button on the right
 //   - No dividers between header and body, or between body and footer
 //   - Tap on the scrim (outside the sheet) closes
-//   - Inline styles for the root (Modal's native window doesn't reliably
-//     apply NativeWind flex-1 polyfills; inline is guaranteed).
+//   - The sheet body grows to fill the available space when topOffset
+//     is provided, so footer buttons always sit at the bottom of the
+//     sheet, not floating mid-screen.
 export function BottomSheet({
   open,
   title,
   onClose,
   children,
-  maxHeight = 480,
+  maxHeight,
   scrollable = true,
   contentPadding = 24,
+  topOffset,
 }: BottomSheetProps) {
-  const insets = useSafeAreaInsets();
+  const { height: viewportHeight } = useWindowDimensions();
+
+  // Resolve topOffset (DimensionValue) into a numeric bottom margin so
+  // the sheet slides up from the viewport's bottom edge by that amount.
+  function resolveTopOffset(): number {
+    if (topOffset === undefined) return 0;
+    if (typeof topOffset === 'number') return topOffset;
+    if (typeof topOffset === 'string' && topOffset.endsWith('%')) {
+      const pct = Number(topOffset.slice(0, -1));
+      if (!Number.isNaN(pct)) {
+        return Math.round((viewportHeight * pct) / 100);
+      }
+    }
+    return 0;
+  }
+
+  const sheetMaxHeight =
+    maxHeight ??
+    // topOffset varsa sheet viewport'un altına yapışık kalır ve
+    // yüksekliği viewport - topOffset olur; böylece içerik az olsa
+    // bile footer ekranın altına yakın durur, altta boşluk olmaz.
+    // Modal transparent modda ve expo-navigation-bar hidden ile
+    // insets.bottom zaten 0; ek pay bırakmıyoruz.
+    (topOffset !== undefined
+      ? viewportHeight - resolveTopOffset()
+      : viewportHeight);
 
   return (
     <Modal
@@ -58,14 +94,16 @@ export function BottomSheet({
         }}
         onPress={onClose}
       >
-        <Pressable onPress={(e) => e.stopPropagation()}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={{
+            width: '100%',
+            maxHeight: sheetMaxHeight,
+          }}
+        >
           <Box
             className="w-full rounded-t-2xl border-t border-border bg-card"
-            style={{
-              paddingBottom: Math.max(insets.bottom, 12),
-              maxHeight,
-              flexShrink: 1,
-            }}
+            style={{ flexShrink: 1 }}
           >
             <HStack className="items-center justify-between px-4 py-3">
               <Text size="lg" bold className="text-foreground">

@@ -222,7 +222,8 @@ describe('branch hub details + ledger (integration)', () => {
     expect(Number(adminBalance.data)).toBeCloseTo(Number(staffBalance.data), 2);
     // Sanity: balance reflects the two visible deliveries minus the payment.
     // sales = (10-5)*12.5 + (6-2)*12.5 = 62.5 + 50 = 112.5; payment = 5.
-    // M15: balance = opening + payments - sales = 0 + 5 - 112.5 = -107.5
-    expect(Number(adminBalance.data)).toBeCloseTo(-107.5, 2);
+    // Canonical (M20): balance = opening + sales - payments
+    //   = 0 + 112.5 - 5 = 107.5 (Alacak).
+    expect(Number(adminBalance.data)).toBeCloseTo(107.5, 2);
   });
 });

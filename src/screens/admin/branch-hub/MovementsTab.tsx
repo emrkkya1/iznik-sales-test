@@ -48,8 +48,8 @@ function Row({
 
   // Subtitle row:
   //   Delivery  → both labels visible when an embedded payment exists;
-  //                "Verilen" alone when there is none.
-  //   Payment   → only "Alınan" (it's the same number as the top amount,
+  //                "Toplam Tutar" alone when there is none.
+  //   Payment   → only "Tahsilat" (it's the same number as the top amount,
   //                but it keeps the row's visual rhythm consistent).
   const verilenValue = isDelivery ? item.amount : null;
   const alinanValue =
@@ -80,33 +80,33 @@ function Row({
           </Text>
         </VStack>
       </HStack>
-      <VStack space="xs" className="items-end">
-        <Amount size="sm" value={netAmount} />
-        {(verilenValue !== null || alinanValue !== null) ? (
-          <HStack space="sm">
-            {verilenValue !== null ? (
-              <Text size="xs">
-                <Text size="xs" className="text-muted-foreground">
-                  Verilen:{' '}
+        <VStack space="xs" className="items-end">
+          <Amount size="sm" value={netAmount} />
+          {(verilenValue !== null || alinanValue !== null) ? (
+            <HStack space="sm">
+              {verilenValue !== null ? (
+                <Text size="xs">
+                  <Text size="xs" className="text-muted-foreground">
+                    Toplam Tutar:{' '}
+                  </Text>
+                  <Text size="xs" className="text-foreground">
+                    {formatCurrency(verilenValue)}
+                  </Text>
                 </Text>
-                <Text size="xs" className="text-foreground">
-                  {formatCurrency(verilenValue)}
+              ) : null}
+              {alinanValue !== null ? (
+                <Text size="xs">
+                  <Text size="xs" className="text-muted-foreground">
+                    Tahsilat:{' '}
+                  </Text>
+                  <Text size="xs" className="text-info">
+                    {formatCurrency(alinanValue)}
+                  </Text>
                 </Text>
-              </Text>
-            ) : null}
-            {alinanValue !== null ? (
-              <Text size="xs">
-                <Text size="xs" className="text-muted-foreground">
-                  Alınan:{' '}
-                </Text>
-                <Text size="xs" className="text-info">
-                  {formatCurrency(alinanValue)}
-                </Text>
-              </Text>
-            ) : null}
-          </HStack>
-        ) : null}
-      </VStack>
+              ) : null}
+            </HStack>
+          ) : null}
+        </VStack>
     </Pressable>
   );
 }

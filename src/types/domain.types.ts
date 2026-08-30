@@ -366,7 +366,8 @@ export type BranchAnalyticsSortBy =
   | 'name'
   | 'balance'
   | 'return_rate'
-  | 'last_activity';
+  | 'last_activity'
+  | 'location';
 
 export type BranchAnalyticsSortDir = 'asc' | 'desc';
 
@@ -376,6 +377,8 @@ export interface BranchAnalyticsFilters {
   dateFrom?: string; // YYYY-MM-DD
   dateTo?: string;
   daysOfWeek?: DayOfWeek[];
+  cityId?: string;
+  districtId?: string;
   sortBy?: BranchAnalyticsSortBy;
   sortDir?: BranchAnalyticsSortDir;
 }

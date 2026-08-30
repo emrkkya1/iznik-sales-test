@@ -3,10 +3,15 @@ import { FlatList, type ListRenderItemInfo } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { Box } from '@/components/ui/box';
-import { DayOfWeekPicker } from '@/components/ui/day-of-week-picker';
+import { Button, ButtonIcon, ButtonText } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  FilterSheet,
+  FilterSheetApplyButton,
+  FilterSheetResetButton,
+} from '@/components/ui/filter-sheet';
 import { HStack } from '@/components/ui/hstack';
-import { SearchIcon } from '@/components/ui/icon';
+import { FilterIcon, SearchIcon } from '@/components/ui/icon';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { Pressable } from '@/components/ui/pressable';
 import { QueryError } from '@/components/ui/query-error';
@@ -19,38 +24,20 @@ import type {
   BranchAnalyticsRow,
   BranchAnalyticsSortBy,
   BranchAnalyticsSortDir,
-  BranchAnalyticsStatus,
-  DayOfWeek,
 } from '@/types';
-import {
-  type DateRangePreset,
-  formatDateForDisplay,
-  getDatePresetRange,
-} from '@/utils/dates';
+import { formatDateForDisplay } from '@/utils/dates';
 import { formatCount } from '@/utils/formatCount';
-import { formatCurrency, getBalanceTone } from '@/utils/formatters';
+import {
+  formatBalanceAmount,
+  getBalanceColorClass,
+  getBalanceLabel,
+} from '@/utils/formatters';
 import { formatRelativeDate } from '@/utils/formatRelativeDate';
 
-const DATE_PRESETS: readonly { value: DateRangePreset; label: string }[] = [
-  { value: '7d', label: 'Son 7 Gün' },
-  { value: '30d', label: 'Son 30 Gün' },
-  { value: 'month', label: 'Bu Ay' },
-  { value: 'all', label: 'Tüm Zamanlar' },
-];
+import { BranchFilters } from './branches/BranchFilters';
+import { countActiveFilters } from './branches/branchFilters.utils';
 
-const STATUS_OPTIONS: readonly {
-  value: BranchAnalyticsStatus;
-  label: string;
-}[] = [
-  { value: 'all', label: 'Tümü' },
-  { value: 'active', label: 'Aktif' },
-  { value: 'inactive', label: 'Pasif' },
-];
-
-type ColumnKey =
-  | BranchAnalyticsSortBy
-  | 'city'
-  | 'district';
+type ColumnKey = BranchAnalyticsSortBy | 'location';
 
 type Column = {
   key: ColumnKey;
@@ -62,76 +49,21 @@ type Column = {
 
 const COLUMNS: readonly Column[] = [
   { key: 'name', label: 'Şube', flex: 1.6, sortable: true },
-  { key: 'city', label: 'Şehir', flex: 1.2 },
-  { key: 'district', label: 'İlçe', flex: 1.2 },
+  { key: 'location', label: 'Şehir/İlçe', flex: 1.7, sortable: true },
   { key: 'balance', label: 'Bakiye', flex: 1.1, align: 'right', sortable: true },
   { key: 'return_rate', label: 'İade Oranı', flex: 1, align: 'right', sortable: true },
-  { key: 'last_activity', label: 'Son İşlem', flex: 1.1, align: 'right', sortable: true },
+  { key: 'last_activity', label: 'Son İşlem', flex: 1.2, align: 'right', sortable: true },
 ];
+
+const EMPTY_FILTERS: BranchAnalyticsFilters = {};
 
 function formatReturnRate(rate: number | null): string {
   if (rate === null) return '—';
   return `%${rate.toFixed(1).replace(/\.0$/, '')}`;
 }
 
-function balanceClass(value: number): string {
-  const tone = getBalanceTone(value);
-  if (tone === 'Borç') return 'text-destructive';
-  if (tone === 'Alacak') return 'text-info';
-  return 'text-foreground';
-}
-
 function alignClass(align: Column['align']): string {
   return align === 'right' ? 'items-end' : 'items-start';
-}
-
-function Segment<T extends string>({
-  options,
-  value,
-  onChange,
-  label,
-}: {
-  options: readonly { value: T; label: string }[];
-  value: T;
-  onChange: (value: T) => void;
-  label: string;
-}) {
-  return (
-    <HStack
-      accessibilityRole="radiogroup"
-      accessibilityLabel={label}
-      space="xs"
-      className="rounded-full border border-border bg-surface-muted p-0.5"
-    >
-      {options.map((option) => {
-        const selected = value === option.value;
-        return (
-          <Pressable
-            key={option.value}
-            style={{ flex: 1 }}
-            onPress={() => onChange(option.value)}
-            accessibilityRole="radio"
-            accessibilityState={{ selected }}
-            className={`min-h-11 items-center justify-center rounded-full px-3 ${
-              selected ? 'bg-primary' : ''
-            }`}
-          >
-            <Text
-              size="xs"
-              bold={selected}
-              className={
-                selected
-                  ? 'text-primary-foreground'
-                  : 'text-surface-muted-foreground'
-              }
-            >
-              {option.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </HStack>
-  );
 }
 
 function BranchTableHeader({
@@ -142,7 +74,7 @@ function BranchTableHeader({
   onSortChange: (column: BranchAnalyticsSortBy) => void;
 }) {
   return (
-    <HStack className="mx-6 items-center rounded-t-xl border border-border bg-muted px-4 py-2">
+    <HStack className="mx-6 items-center rounded-t-xl border border-border bg-muted px-3 py-1.5">
       {COLUMNS.map((column) => {
         const active = column.key === sort.columnKey;
         const label = active
@@ -160,7 +92,7 @@ function BranchTableHeader({
                 accessibilityRole="button"
                 accessibilityLabel={label}
                 accessibilityHint="Sıralama yönünü değiştirir"
-                className="min-h-11 justify-center"
+                className="min-h-8 justify-center"
               >
                 <HStack space="xs" className="items-center">
                   <Text size="xs" bold className="text-muted-foreground">
@@ -188,33 +120,45 @@ function BranchTableHeader({
 export function BranchesTableScreen() {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState('');
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<BranchAnalyticsStatus>('all');
-  const [datePreset, setDatePreset] = useState<DateRangePreset>('all');
-  const [daysOfWeek, setDaysOfWeek] = useState<DayOfWeek[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] =
+    useState<BranchAnalyticsFilters>(EMPTY_FILTERS);
+  const [draftFilters, setDraftFilters] =
+    useState<BranchAnalyticsFilters>(EMPTY_FILTERS);
   const [sort, setSort] = useState<{
     columnKey: BranchAnalyticsSortBy;
     direction: BranchAnalyticsSortDir;
   }>({ columnKey: 'name', direction: 'asc' });
 
+  // 300ms debounced search → query input.
   useEffect(() => {
-    const timeout = setTimeout(() => setSearch(searchInput.trim()), 300);
+    const timeout = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  const filters: BranchAnalyticsFilters = useMemo(() => {
-    const range = getDatePresetRange(datePreset);
-    return {
-      search: search || undefined,
-      status,
-      ...range,
-      daysOfWeek: daysOfWeek.length > 0 ? daysOfWeek : undefined,
+  const openFilterSheet = useCallback(() => {
+    // Sheet açılırken draft, applied + searchInput ile başlar. Search
+    // dışındaki filtreler draft.search'i etkilemez; Şube Adı input'u
+    // doğrudan searchInput'a bağlı olduğu için tekrar set etmeye gerek
+    // yok.
+    const { search: _ignored, ...rest } = appliedFilters;
+    void _ignored;
+    setDraftFilters(rest);
+    setFilterSheetOpen(true);
+  }, [appliedFilters]);
+
+  const queryFilters: BranchAnalyticsFilters = useMemo(
+    () => ({
+      ...appliedFilters,
+      search: searchQuery || undefined,
       sortBy: sort.columnKey,
       sortDir: sort.direction,
-    };
-  }, [datePreset, daysOfWeek, search, sort, status]);
+    }),
+    [appliedFilters, searchQuery, sort],
+  );
 
-  const query = useBranchesAnalytics(filters);
+  const query = useBranchesAnalytics(queryFilters);
   const rows = useMemo(
     () => query.data?.pages.flatMap((page) => page.rows) ?? [],
     [query.data],
@@ -241,81 +185,116 @@ export function BranchesTableScreen() {
     [router],
   );
 
+  const applyFilters = useCallback(() => {
+    // search searchQuery üzerinden yönetildiği için draft.search'i
+    // applied'a taşımaya gerek yok; diğer filtreleri uygularız.
+    const { search: _ignored, ...rest } = draftFilters;
+    void _ignored;
+    setAppliedFilters(rest);
+    setFilterSheetOpen(false);
+  }, [draftFilters]);
+
+  const resetFilters = useCallback(() => {
+    setDraftFilters(EMPTY_FILTERS);
+    setAppliedFilters(EMPTY_FILTERS);
+    setSearchInput('');
+    setSearchQuery('');
+    setFilterSheetOpen(false);
+  }, []);
+
+  // Active-filter rozeti: appliedFilters + anlık searchQuery. searchQuery
+  // zaten query'ye bağlı olduğu için Şube Ara'ya yazıldığında artar,
+  // silindiğinde azalır.
+  const { search: _search, ...appliedWithoutSearch } = appliedFilters;
+  void _search;
+  const appliedNonSearchCount = countActiveFilters(appliedWithoutSearch);
+  const activeCount = appliedNonSearchCount + (searchQuery ? 1 : 0);
+
+  const dateError =
+    draftFilters.dateFrom && draftFilters.dateTo &&
+    draftFilters.dateFrom > draftFilters.dateTo
+      ? 'Başlangıç tarihi bitişten sonra olamaz.'
+      : null;
+
   const renderRow = useCallback(
-    ({ item }: ListRenderItemInfo<BranchAnalyticsRow>) => (
-      <Pressable
-        onPress={() => openBranch(item)}
-        accessibilityRole="button"
-        accessibilityLabel={`${item.name}, ${item.cityName}, ${item.districtName}`}
-        accessibilityHint="Şube detaylarını açar"
-        className="mx-6 border-x border-b border-border bg-card data-[pressed=true]:bg-accent"
-      >
-        <HStack className="items-center px-4 py-3">
-          <Box style={{ flex: 1.6 }} className="items-start justify-center">
-            <VStack space="xs">
-              <Text size="sm" bold numberOfLines={1} className="text-foreground">
-                {item.name}
-              </Text>
-              {!item.isActive ? (
-                <Text size="xs" className="text-muted-foreground">
-                  Pasif
+    ({ item }: ListRenderItemInfo<BranchAnalyticsRow>) => {
+      const balanceLabel = getBalanceLabel(item.currentBalance);
+      return (
+        <Pressable
+          onPress={() => openBranch(item)}
+          accessibilityRole="button"
+          accessibilityLabel={`${item.name}, ${item.cityName}, ${item.districtName}`}
+          accessibilityHint="Şube detaylarını açar"
+          className="mx-6 border-x border-b border-border bg-card data-[pressed=true]:bg-accent"
+        >
+          <HStack className="items-center px-3 py-3">
+            <Box style={{ flex: 1.6 }} className="items-start justify-center">
+              <VStack space="xs">
+                <Text size="sm" bold numberOfLines={1} className="text-foreground">
+                  {item.name}
                 </Text>
-              ) : null}
-            </VStack>
-          </Box>
-          <Box style={{ flex: 1.2 }} className="items-start justify-center">
-            <Text size="sm" numberOfLines={1} className="text-foreground">
-              {item.cityName}
-            </Text>
-          </Box>
-          <Box style={{ flex: 1.2 }} className="items-start justify-center">
-            <Text size="sm" numberOfLines={1} className="text-foreground">
-              {item.districtName}
-            </Text>
-          </Box>
-          <Box style={{ flex: 1.1 }} className="items-end justify-center">
-            <VStack space="xs" className="items-end">
-              <Text size="sm" bold className={balanceClass(item.currentBalance)}>
-                {formatCurrency(item.currentBalance)}
+                {!item.isActive ? (
+                  <Text size="xs" className="text-muted-foreground">
+                    Pasif
+                  </Text>
+                ) : null}
+              </VStack>
+            </Box>
+            <Box style={{ flex: 1.7 }} className="items-start justify-center">
+              <Text size="sm" numberOfLines={1} className="text-foreground">
+                {`${item.cityName} / ${item.districtName}`}
               </Text>
-              <Text size="xs" className="text-muted-foreground">
-                {getBalanceTone(item.currentBalance)}
-              </Text>
-            </VStack>
-          </Box>
-          <Box style={{ flex: 1 }} className="items-end justify-center">
-            <VStack space="xs" className="items-end">
-              <Text size="sm" bold className="text-foreground">
-                {formatReturnRate(item.returnRate)}
-              </Text>
-              <Text size="xs" className="text-muted-foreground">
-                {formatCount(item.returnedQty)}/{formatCount(item.deliveredQty)}
-              </Text>
-            </VStack>
-          </Box>
-          <Box style={{ flex: 1.1 }} className="items-end justify-center">
-            <VStack space="xs" className="items-end">
-              <Text size="sm" className="text-foreground">
-                {formatRelativeDate(item.lastActivityDate)}
-              </Text>
-              <Text size="xs" className="text-muted-foreground">
-                {item.lastActivityDate
-                  ? formatDateForDisplay(item.lastActivityDate)
-                  : 'Veri yok'}
-              </Text>
-            </VStack>
-          </Box>
-        </HStack>
-      </Pressable>
-    ),
+            </Box>
+            <Box style={{ flex: 1.1 }} className="items-end justify-center">
+              <VStack space="xs" className="items-end">
+                <Text
+                  size="sm"
+                  bold
+                  className={getBalanceColorClass(item.currentBalance)}
+                >
+                  {formatBalanceAmount(item.currentBalance)}
+                </Text>
+                {balanceLabel ? (
+                  <Text size="xs" className="text-muted-foreground">
+                    {balanceLabel}
+                  </Text>
+                ) : null}
+              </VStack>
+            </Box>
+            <Box style={{ flex: 1 }} className="items-end justify-center">
+              <VStack space="xs" className="items-end">
+                <Text size="sm" bold className="text-foreground">
+                  {formatReturnRate(item.returnRate)}
+                </Text>
+                <Text size="xs" className="text-muted-foreground">
+                  {formatCount(item.returnedQty)}/{formatCount(item.deliveredQty)}
+                </Text>
+              </VStack>
+            </Box>
+            <Box style={{ flex: 1.2 }} className="items-end justify-center">
+              <VStack space="xs" className="items-end">
+                <Text size="sm" className="text-foreground">
+                  {formatRelativeDate(item.lastActivityDate)}
+                </Text>
+                <Text size="xs" className="text-muted-foreground">
+                  {item.lastActivityDate
+                    ? formatDateForDisplay(item.lastActivityDate)
+                    : 'Veri yok'}
+                </Text>
+              </VStack>
+            </Box>
+          </HStack>
+        </Pressable>
+      );
+    },
     [openBranch],
   );
 
   const header = useMemo(
     () => (
       <>
-        <VStack space="md" className="px-6 pb-3 pt-4">
-          <VStack space="xs">
+        <VStack space="sm" className="px-6 pb-2 pt-4">
+          <HStack className="items-baseline justify-between">
             <Text size="xl" bold className="text-foreground">
               Şubeler
             </Text>
@@ -324,68 +303,45 @@ export function BranchesTableScreen() {
                 ? 'Şubeler yükleniyor'
                 : `${rows.length} / ${totalCount} şube`}
             </Text>
-          </VStack>
-
-          <Input className="bg-card">
-            <InputSlot className="pl-1">
-              <InputIcon as={SearchIcon} />
-            </InputSlot>
-            <InputField
-              accessibilityLabel="Şube ara"
-              placeholder="Şube ara…"
-              value={searchInput}
-              onChangeText={setSearchInput}
-              returnKeyType="search"
-            />
-          </Input>
-
-          <HStack space="md" className="items-start">
-            <Box style={{ flex: 1 }}>
-              <Segment
-                label="Şube durumu"
-                options={STATUS_OPTIONS}
-                value={status}
-                onChange={setStatus}
-              />
-            </Box>
-            <Box style={{ flex: 1.5 }}>
-              <Segment
-                label="Metrik tarih aralığı"
-                options={DATE_PRESETS}
-                value={datePreset}
-                onChange={setDatePreset}
-              />
-            </Box>
           </HStack>
 
-          <HStack space="md" className="items-center justify-between">
-            <VStack space="xs">
-              <Text size="xs" className="text-muted-foreground">
-                Metrik günleri
-              </Text>
-              <DayOfWeekPicker value={daysOfWeek} onChange={setDaysOfWeek} />
-            </VStack>
-            {query.isRefetching && !query.isFetchingNextPage ? (
-              <Text size="xs" className="text-muted-foreground">
-                Güncelleniyor…
-              </Text>
-            ) : null}
+          <HStack space="sm" className="items-center">
+            <Input className="flex-1 bg-card">
+              <InputSlot className="pl-1">
+                <InputIcon as={SearchIcon} />
+              </InputSlot>
+              <InputField
+                accessibilityLabel="Şube ara"
+                placeholder="Şube ara…"
+                value={searchInput}
+                onChangeText={setSearchInput}
+                returnKeyType="search"
+              />
+            </Input>
+            <Button
+              variant={activeCount > 0 ? 'default' : 'outline'}
+              size="default"
+              onPress={openFilterSheet}
+              accessibilityLabel="Filtrele"
+            >
+              <ButtonIcon as={FilterIcon} />
+              <ButtonText>
+                Filtrele{activeCount > 0 ? ` · ${activeCount}` : ''}
+              </ButtonText>
+            </Button>
           </HStack>
         </VStack>
         <BranchTableHeader sort={sort} onSortChange={changeSort} />
       </>
     ),
     [
+      activeCount,
       changeSort,
-      datePreset,
-      daysOfWeek,
-      query.isFetchingNextPage,
+      openFilterSheet,
       query.isLoading,
-      query.isRefetching,
       rows.length,
       searchInput,
       sort,
-      status,
       totalCount,
     ],
   );
@@ -435,6 +391,31 @@ export function BranchesTableScreen() {
         initialNumToRender={20}
         windowSize={7}
       />
+
+      <FilterSheet
+        open={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        // Lift the sheet up so dropdown popovers anchored below their
+        // triggers have visible room on tablet landscape.
+        topOffset="12%"
+        footer={
+          <>
+            <FilterSheetResetButton onPress={resetFilters} />
+            <FilterSheetApplyButton
+              onPress={applyFilters}
+              disabled={!!dateError}
+            />
+          </>
+        }
+      >
+        <BranchFilters
+          draft={draftFilters}
+          onDraftChange={setDraftFilters}
+          searchInput={searchInput}
+          onSearchInputChange={setSearchInput}
+          dateError={dateError}
+        />
+      </FilterSheet>
     </Box>
   );
 }

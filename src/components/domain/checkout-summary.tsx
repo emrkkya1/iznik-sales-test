@@ -1,16 +1,14 @@
 import type { ReactNode } from 'react';
 
 import { Amount } from '@/components/ui/amount';
+import { BalanceAmount } from '@/components/ui/balance-amount';
 import { Box } from '@/components/ui/box';
 import { Divider } from '@/components/ui/divider';
 import { HStack } from '@/components/ui/hstack';
 import { Icon, AlertCircleIcon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import {
-  formatCurrency,
-  getBranchBalanceDirection,
-} from '@/utils/formatters';
+import { formatCurrency, getBranchBalanceDirection } from '@/utils/formatters';
 import type { ReceiptPreview } from '@/utils/receiptPreview';
 
 type CheckoutSummaryProps = {
@@ -37,18 +35,9 @@ function Row({
   );
 }
 
-function resultingBalanceTone(value: number): 'info' | 'destructive' | 'default' {
-  // Cash-flow convention: positive = cash in hand from this branch
-  // (info/blue). Negative = cash missing (destructive/red).
-  if (value > 0) return 'info';
-  if (value < 0) return 'destructive';
-  return 'default';
-}
-
-// "Tutar" (products cost) is a receivable from the branch, not a cash
-// balance. Positive = branch owes us this much (Alacak). Negative = net
-// returns, we owe back (Borç). This is the inverse of `getBalanceTone`
-// which describes a cash-in-hand balance where positive = Borç.
+// "Tutar" (products cost) is a receivable from the branch. Positive =
+// branch owes us this much (Alacak). Negative = net returns, we owe back
+// (Borç). This is the same convention as the persisted balance.
 function requiredToneLabel(value: number): 'Alacak' | 'Borç' | null {
   if (value > 0) return 'Alacak';
   if (value < 0) return 'Borç';
@@ -62,7 +51,6 @@ export function CheckoutSummary({
   loadingBalance = false,
 }: CheckoutSummaryProps) {
   const requiredLabel = requiredToneLabel(preview.requiredAmount);
-  const balanceTone = resultingBalanceTone(preview.resultingBalance);
   const previousDirection = getBranchBalanceDirection(
     preview.previousBalance,
     true,
@@ -144,11 +132,10 @@ export function CheckoutSummary({
                 …
               </Text>
             ) : (
-              <Amount
-                size="md"
+              <BalanceAmount
                 value={preview.previousBalance}
-                tone="muted"
-                showSign
+                size="md"
+                showLabel
               />
             )}
           </Row>
@@ -156,12 +143,11 @@ export function CheckoutSummary({
           <Divider />
 
           <Row label="Yeni Şube Bakiyesi">
-            <Amount
+            <BalanceAmount
+              value={preview.resultingBalance}
               size="lg"
               bold
-              value={preview.resultingBalance}
-              showSign
-              tone={balanceTone}
+              showLabel
             />
           </Row>
         </VStack>

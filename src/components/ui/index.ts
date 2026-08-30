@@ -20,6 +20,7 @@ export { MutationButton } from './mutation-button';
 export { Picker } from './picker';
 export { QuantityStepper } from './stepper';
 export { Amount } from './amount';
+export { BalanceAmount } from './balance-amount';
 export { DateField } from './date-field';
 export { ResultState } from './result-state';
 export { Sheet } from './sheet';
@@ -27,3 +28,10 @@ export { ProgressBar } from './progress-bar';
 export { QueryError } from './query-error';
 export { BottomSheet } from './bottom-sheet';
 export { DayOfWeekPicker, DAYS_OF_WEEK } from './day-of-week-picker';
+export {
+  FilterSheet,
+  FilterSheetApplyButton,
+  FilterSheetResetButton,
+} from './filter-sheet';
+export { Dropdown } from './dropdown';
+export type { DropdownOption } from './dropdown';
