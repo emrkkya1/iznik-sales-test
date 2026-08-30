@@ -78,6 +78,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:db": "node ./scripts/run-db-integration.mjs",
+    "test:all": "npm run typecheck && npm run lint && npm test && npm run test:db",
     "db:types": "supabase gen types typescript --local > src/types/database.types.ts",
     "db:reset": "supabase db reset",
     "db:start": "supabase start",

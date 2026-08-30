@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 
 import { services } from '@/services';
 import type {
@@ -7,8 +7,11 @@ import type {
   BranchAnalyticsRow,
 } from '@/types';
 import { instrumentQuery } from '@/utils/logger';
+import { getNextBranchOffset } from '@/utils/branchesAnalytics';
 
 const PAGE_SIZE = 50;
+
+export const BRANCH_ANALYTICS_QUERY_KEY = ['analytics', 'branches'] as const;
 
 type BranchesAnalyticsPage = {
   rows: BranchAnalyticsRow[];
@@ -26,7 +29,7 @@ type BranchesAnalyticsPage = {
  */
 export function useBranchesAnalytics(filters: BranchAnalyticsFilters) {
   return useInfiniteQuery<BranchesAnalyticsPage, Error>({
-    queryKey: ['analytics', 'branches', filters],
+    queryKey: [...BRANCH_ANALYTICS_QUERY_KEY, filters],
     queryFn: instrumentQuery(
       'list_branches_analytics',
       async ({ pageParam }) => {
@@ -36,10 +39,11 @@ export function useBranchesAnalytics(filters: BranchAnalyticsFilters) {
             limit: PAGE_SIZE,
             offset,
           });
-        const nextOffset =
-          offset + page.rows.length < page.totalCount
-            ? offset + PAGE_SIZE
-            : null;
+        const nextOffset = getNextBranchOffset(
+          offset,
+          page.rows.length,
+          page.totalCount,
+        );
         return {
           rows: page.rows,
           totalCount: page.totalCount,
@@ -50,5 +54,7 @@ export function useBranchesAnalytics(filters: BranchAnalyticsFilters) {
     ),
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
   });
 }

@@ -357,7 +357,7 @@ export interface ActivateBranchProductInput {
 // M18: Branches analytics table (Şubeler tab)
 // ============================================
 
-/** Day-of-week bitmask sent to list_branches_analytics. 0=Sun..6=Sat (matches JS Date.getDay). */
+/** Day values sent to list_branches_analytics. 0=Sun..6=Sat (matches JS Date.getDay). */
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export type BranchAnalyticsStatus = 'all' | 'active' | 'inactive';
@@ -392,7 +392,7 @@ export interface BranchAnalyticsRow {
   returnedQty: number;
   /** Percent 0-100; `null` when deliveredQty is 0. */
   returnRate: number | null;
-  /** YYYY-MM-DD; null only if branch has zero rows ever (shouldn't happen). */
+  /** Latest transaction in the selected metric range; null when none matches. */
   lastActivityDate: string | null;
   isActive: boolean;
 }

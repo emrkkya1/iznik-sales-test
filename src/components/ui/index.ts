@@ -26,6 +26,4 @@ export { Sheet } from './sheet';
 export { ProgressBar } from './progress-bar';
 export { QueryError } from './query-error';
 export { BottomSheet } from './bottom-sheet';
-export { DataTable } from './data-table';
-export type { DataTableColumn } from './data-table';
 export { DayOfWeekPicker, DAYS_OF_WEEK } from './day-of-week-picker';

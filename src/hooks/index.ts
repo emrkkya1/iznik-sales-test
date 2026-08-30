@@ -29,7 +29,10 @@ export {
   useBranchReturnRate,
   useDailySeries,
 } from './useReports';
-export { useBranchesAnalytics } from './useBranchesAnalytics';
+export {
+  BRANCH_ANALYTICS_QUERY_KEY,
+  useBranchesAnalytics,
+} from './useBranchesAnalytics';
 export {
   useCitiesWithCounts,
   useDistrictsWithCounts,

@@ -45,6 +45,34 @@ export function getIstanbulToday(): string {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
+export type DateRangePreset = '7d' | '30d' | 'month' | 'all';
+
+// Date-only range arithmetic. UTC is used only as a calendar calculator, so
+// the result does not depend on the device timezone.
+export function getDatePresetRange(
+  preset: DateRangePreset,
+  today: string = getIstanbulToday(),
+): { dateFrom: string | undefined; dateTo: string | undefined } {
+  if (preset === 'all') {
+    return { dateFrom: undefined, dateTo: undefined };
+  }
+
+  const [year, month, day] = today.split('-').map(Number);
+  if (preset === 'month') {
+    return {
+      dateFrom: `${year}-${String(month).padStart(2, '0')}-01`,
+      dateTo: today,
+    };
+  }
+
+  const days = preset === '7d' ? 7 : 30;
+  const start = new Date(Date.UTC(year, month - 1, day - (days - 1)));
+  return {
+    dateFrom: start.toISOString().slice(0, 10),
+    dateTo: today,
+  };
+}
+
 // Staff may edit a delivery only if its business date is today in
 // Europe/Istanbul and the local time is before 23:59.
 export function canEditDelivery(deliveryDate: string): boolean {

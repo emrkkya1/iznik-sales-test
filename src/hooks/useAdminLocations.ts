@@ -16,6 +16,7 @@ import type {
 import { instrumentQuery, logMutation, summarizeResult } from '@/utils/logger';
 
 import { useBranchBalance } from './useLedger';
+import { BRANCH_ANALYTICS_QUERY_KEY } from './useBranchesAnalytics';
 
 const REFERENCE_STALE_MS = 5 * 60_000;
 const TRANSACTIONAL_STALE_MS = 60_000;
@@ -172,6 +173,7 @@ function invalidateBranches(
     queryKey: ['admin', 'branches', 'with-context', districtId],
   });
   queryClient.invalidateQueries({ queryKey: ['admin', 'districts'] });
+  queryClient.invalidateQueries({ queryKey: BRANCH_ANALYTICS_QUERY_KEY });
 }
 
 function invalidateAppConfig(queryClient: ReturnType<typeof useQueryClient>) {
@@ -258,6 +260,7 @@ export function useSetBranchActive() {
     onSuccess: (_data, vars) => {
       logMutation('set_branch_active', 'success', { id: vars.id });
       queryClient.invalidateQueries({ queryKey: ['admin', 'branches'] });
+      queryClient.invalidateQueries({ queryKey: BRANCH_ANALYTICS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ['admin', 'districts'] });
       queryClient.invalidateQueries({
         queryKey: ['admin', 'branch-hub', 'details', vars.id],

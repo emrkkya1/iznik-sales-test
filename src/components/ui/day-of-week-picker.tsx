@@ -11,14 +11,15 @@ import type { DayOfWeek } from '@/types';
 export const DAYS_OF_WEEK: readonly {
   value: DayOfWeek;
   short: string;
+  label: string;
 }[] = [
-  { value: 1, short: 'Pt' }, // Pazartesi
-  { value: 2, short: 'Sa' }, // Salı
-  { value: 3, short: 'Ça' }, // Çarşamba
-  { value: 4, short: 'Pe' }, // Perşembe
-  { value: 5, short: 'Cu' }, // Cuma
-  { value: 6, short: 'Ct' }, // Cumartesi
-  { value: 0, short: 'Pa' }, // Pazar
+  { value: 1, short: 'Pt', label: 'Pazartesi' },
+  { value: 2, short: 'Sa', label: 'Salı' },
+  { value: 3, short: 'Ça', label: 'Çarşamba' },
+  { value: 4, short: 'Pe', label: 'Perşembe' },
+  { value: 5, short: 'Cu', label: 'Cuma' },
+  { value: 6, short: 'Ct', label: 'Cumartesi' },
+  { value: 0, short: 'Pa', label: 'Pazar' },
 ];
 
 type DayOfWeekPickerProps = {
@@ -41,7 +42,7 @@ export function DayOfWeekPicker({
     const set = new Set(value);
     if (set.has(d)) set.delete(d);
     else set.add(d);
-    // Emit in canonical Sun..Sat order so the wire payload stays stable.
+    // Emit in display order so the wire payload remains deterministic.
     onChange(DAYS_OF_WEEK.map((day) => day.value).filter((v) => set.has(v as DayOfWeek)));
   }
 
@@ -54,10 +55,12 @@ export function DayOfWeekPicker({
             key={day.value}
             onPress={() => toggle(day.value)}
             disabled={disabled}
-            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={day.label}
+            accessibilityState={{ selected: isActive, disabled }}
           >
             <Box
-              className={`h-9 w-9 items-center justify-center rounded-full border ${
+              className={`h-11 w-11 items-center justify-center rounded-full border ${
                 isActive
                   ? 'border-primary bg-primary'
                   : 'border-border bg-surface-muted'

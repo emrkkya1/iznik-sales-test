@@ -64,7 +64,97 @@ with no logs).
 - RPC names are snake_case to match the server.
 - Treat this as a PR-blocking rule: a query without `instrumentQuery` means a future bug ships with no diagnostics.
 
-# Theming (src/global.css)
+# Verifications and tests (PR-blocking)
+
+Every change ships only after the relevant quality gates pass. Running
+them locally is mandatory before opening or merging a PR.
+
+## Required checks before opening a PR
+
+```bash
+npm run typecheck   # tsc --noEmit
+npm run lint        # expo lint
+npm test            # unit tests (Vitest, no Docker needed)
+npm run test:db     # database integration tests (local Supabase + reset)
+```
+
+Or run them all sequentially: `npm run test:all`.
+
+## When to write a test
+
+- **Every RPC contract change.** If you touch `supabase/migrations/*` and
+  alter a function signature, validation, authorization, or aggregation,
+  update or add a case in `tests/integration/*.integration.test.ts`. The
+  test must cover at least: admin happy path, staff rejection, anonymous
+  rejection, and one malformed-input rejection.
+- **Every React Query hook or mutation.** If you add or modify a `queryFn`
+  in `src/hooks/` or a mutation in `useMutations.ts`, add a unit test in
+  `tests/hooks/` covering the new branch (pagination cursor, invalidation
+  keys, error mapping).
+- **Every pure utility.** Anything in `src/utils/` that has more than one
+  caller or non-trivial branching gets a unit test under `tests/utils/`.
+  No test means future refactors will quietly break it.
+- **Every Zod schema.** Schemas in `src/services/supabase/*Schema.ts` are
+  the runtime contract with the database; add a `*.test.ts` next to each
+  one with valid + null/missing + malformed fixtures.
+- **Every screen rewrite.** Manual smoke on the Android emulator
+  (`adb -s emulator-5554 …`) for the rebuilt screen at a representative
+  tablet landscape resolution (e.g. 1600×2560). Unit tests cannot catch
+  flex collapse, nested `FlatList` zero-height, or missing safe-area
+  insets.
+
+## Database integration tests (`npm run test:db`)
+
+- The runner (`scripts/run-db-integration.mjs`) starts local Supabase,
+  runs `supabase db reset --local` to recreate + migrate + seed the
+  database, then forwards credentials to Vitest only via env vars.
+- It **refuses to run** unless `API_URL` is loopback on port 54321 and
+  `DB_URL` is loopback on port 54322. No remote database is ever
+  touched by `test:db`.
+- All integration tests share the database; `vitest.integration.config.mjs`
+  forces a single fork and disables file parallelism. Use unique
+  prefixed fixture names (e.g. `ITEST-DEL <timestamp>`) so each run is
+  isolated from the seed data.
+- Use the helpers in `tests/integration/_helpers/clients.ts` for
+  admin/staff/anonymous/service-role clients. They sign in through
+  local Auth using the seeded credentials
+  (`admin@iznik.test / admin123`, `staff@iznik.test / staff123`).
+- Sign in as `staff` or use the anon helper when the test asserts that
+  the RPC rejects unauthorized callers.
+- `supabase/migrations/20240101000020_grant_dml_for_admin_clients.sql`
+  grants DML on reference tables to `authenticated` **for the test
+  harness**. RLS still gates every row. Direct writes from the admin
+  client will bypass the SECURITY DEFINER RPCs and therefore bypass
+  `log_audit()` — production code must keep going through RPCs.
+
+## Local database troubleshooting
+
+- `supabase db reset` boots a fresh schema; the runner uses this for
+  every run, so do not `npm run db:seed` in between (it is not
+  idempotent).
+- If `auth.signInWithPassword` returns `502 An invalid response was
+  received from the upstream server` after a reset, run
+  `npx supabase stop && npx supabase start` to clear stuck GoTrue
+  state. This is a CLI quirk, not an app bug.
+- `supabase/seed.sql` used psql-only `\i` directives that the CLI
+  cannot parse; seeding is configured via
+  `supabase/config.toml` → `[db.seed].sql_paths = ["./seed-data/*.sql"]`.
+  Do not reintroduce `\i` directives — they break `supabase db reset`.
+
+## Pre-commit checklist
+
+- [ ] `npm run typecheck` passes.
+- [ ] `npm run lint` passes (fix `Array<T>` → `T[]`, unused imports,
+      etc.).
+- [ ] `npm test` passes.
+- [ ] `npm run test:db` passes against a clean local database.
+- [ ] Manual smoke on the Android emulator for any changed screen.
+- [ ] Migrations applied: `npx supabase migration list` shows no
+      pending rows.
+- [ ] PR description links the user-visible behavior and the test
+      that guards it.
+
+
 
 All colors are defined as CSS custom properties in `src/global.css`, in two
 layers:
