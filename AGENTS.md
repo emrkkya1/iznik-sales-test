@@ -72,13 +72,15 @@ them locally is mandatory before opening or merging a PR.
 ## Required checks before opening a PR
 
 ```bash
-npm run typecheck   # tsc --noEmit
-npm run lint        # expo lint
-npm test            # unit tests (Vitest, no Docker needed)
-npm run test:db     # database integration tests (local Supabase + reset)
+npm run typecheck       # tsc --noEmit
+npm run lint            # expo lint
+npm test                # unit tests (Vitest, no Docker needed)
+npm run test:db         # database integration tests (local Supabase + reset)
+npm run test:integration # unit + integration back to back, single command
 ```
 
-Or run them all sequentially: `npm run test:all`.
+Or run them all sequentially: `npm run test:all` (does everything including
+typecheck and lint).
 
 ## When to write a test
 
@@ -148,6 +150,8 @@ Or run them all sequentially: `npm run test:all`.
       etc.).
 - [ ] `npm test` passes.
 - [ ] `npm run test:db` passes against a clean local database.
+- [ ] `npm run test:integration` (or `npm run test:all`) is the single
+      command that exercises unit + integration tests back to back.
 - [ ] Manual smoke on the Android emulator for any changed screen.
 - [ ] Migrations applied: `npx supabase migration list` shows no
       pending rows.
