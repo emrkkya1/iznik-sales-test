@@ -14,6 +14,9 @@ import {
 type FixtureIds = {
   cityId: string;
   districtId: string;
+  cityOtherId: string;
+  districtOtherId: string;
+  branchOtherId: string;
   branchWithActivityId: string;
   branchEmptyId: string;
   branchInactiveId: string;
@@ -53,7 +56,8 @@ async function seedFixtures(service: AdminClient): Promise<FixtureIds> {
     .insert({
       district_id: ids.districtId,
       name: `${PREFIX} Aktif Şube`,
-      current_balance: -125.5,
+      // Canonical (M20): +125.5 = branch owes us 125.5 (Alacak).
+      current_balance: 125.5,
       is_active: true,
     })
     .select('id')
@@ -87,6 +91,36 @@ async function seedFixtures(service: AdminClient): Promise<FixtureIds> {
     throw new Error(`Inactive branch insert failed: ${branchInactive.error?.message}`);
   }
   ids.branchInactiveId = branchInactive.data.id;
+
+  // İkinci bir şehir/ilçe/şube, şehir filtresi testleri için.
+  const cityOther = await service
+    .from('cities')
+    .insert({ name: `${PREFIX} Diğer Şehir` })
+    .select('id')
+    .single();
+  if (cityOther.error || !cityOther.data) throw new Error(`City2 insert failed: ${cityOther.error?.message}`);
+  ids.cityOtherId = cityOther.data.id;
+
+  const districtOther = await service
+    .from('districts')
+    .insert({ city_id: ids.cityOtherId!, name: `${PREFIX} Diğer İlçe` })
+    .select('id')
+    .single();
+  if (districtOther.error || !districtOther.data) throw new Error(`District2 insert failed: ${districtOther.error?.message}`);
+  ids.districtOtherId = districtOther.data.id;
+
+  const branchOther = await service
+    .from('branches')
+    .insert({
+      district_id: ids.districtOtherId,
+      name: `${PREFIX} Diğer Şube`,
+      is_active: true,
+      current_balance: 0,
+    })
+    .select('id')
+    .single();
+  if (branchOther.error || !branchOther.data) throw new Error(`Branch2 insert failed: ${branchOther.error?.message}`);
+  ids.branchOtherId = branchOther.data.id;
 
   const product = await service
     .from('products')
@@ -276,6 +310,15 @@ async function cleanupFixtures(service: AdminClient) {
   if (ids.cityId) {
     await service.from('cities').delete().eq('id', ids.cityId);
   }
+  if (ids.branchOtherId) {
+    await service.from('branches').delete().eq('id', ids.branchOtherId);
+  }
+  if (ids.districtOtherId) {
+    await service.from('districts').delete().eq('id', ids.districtOtherId);
+  }
+  if (ids.cityOtherId) {
+    await service.from('cities').delete().eq('id', ids.cityOtherId);
+  }
 }
 
 describe('list_branches_analytics (integration)', () => {
@@ -359,7 +402,7 @@ describe('list_branches_analytics (integration)', () => {
     });
     expect(error).toBeNull();
     const parsed = parseBranchAnalyticsPage(data);
-    expect(parsed.totalCount).toBe(3);
+    expect(parsed.totalCount).toBe(4);
     for (const row of parsed.rows) {
       expect(Number(row.deliveredQty)).toBe(0);
       expect(Number(row.returnedQty)).toBe(0);
@@ -423,13 +466,14 @@ describe('list_branches_analytics (integration)', () => {
     });
     expect(secondError).toBeNull();
     const second = parseBranchAnalyticsPage(secondData);
-    expect(second.rows.length).toBe(1);
+    // Fixture now seeds 4 branches (3 in the main city + 1 in another).
+    expect(second.rows.length).toBe(2);
 
     const ids = new Set([
       ...first.rows.map((row) => row.branchId),
       ...second.rows.map((row) => row.branchId),
     ]);
-    expect(ids.size).toBe(3);
+    expect(ids.size).toBe(4);
   });
 
   it('rejects staff callers with an authorization error', async () => {
@@ -443,5 +487,120 @@ describe('list_branches_analytics (integration)', () => {
     const { data, error } = await anon.rpc('list_branches_analytics', { p_limit: 50, p_offset: 0 });
     expect(data).toBeNull();
     expect(error).not.toBeNull();
+  });
+
+  it('sorts branches by location ascending (city then district)', async () => {
+    const { data, error } = await admin.rpc('list_branches_analytics', {
+      p_search: PREFIX,
+      p_sort_by: 'location',
+      p_sort_dir: 'asc',
+      p_limit: 50,
+      p_offset: 0,
+    });
+    expect(error).toBeNull();
+    const parsed = parseBranchAnalyticsPage(data);
+    const keys = parsed.rows.map((row) => ({
+      city: row.cityName.toLocaleLowerCase('tr-TR'),
+      district: row.districtName.toLocaleLowerCase('tr-TR'),
+    }));
+    const sorted = [...keys].sort((a, b) => {
+      const cityCmp = a.city.localeCompare(b.city, 'tr');
+      if (cityCmp !== 0) return cityCmp;
+      return a.district.localeCompare(b.district, 'tr');
+    });
+    expect(keys).toEqual(sorted);
+  });
+
+  it('sorts branches by location descending', async () => {
+    const { data, error } = await admin.rpc('list_branches_analytics', {
+      p_search: PREFIX,
+      p_sort_by: 'location',
+      p_sort_dir: 'desc',
+      p_limit: 50,
+      p_offset: 0,
+    });
+    expect(error).toBeNull();
+    const parsed = parseBranchAnalyticsPage(data);
+    const keys = parsed.rows.map((row) => ({
+      city: row.cityName.toLocaleLowerCase('tr-TR'),
+      district: row.districtName.toLocaleLowerCase('tr-TR'),
+    }));
+    const sorted = [...keys].sort((a, b) => {
+      const cityCmp = b.city.localeCompare(a.city, 'tr');
+      if (cityCmp !== 0) return cityCmp;
+      return b.district.localeCompare(a.district, 'tr');
+    });
+    expect(keys).toEqual(sorted);
+  });
+
+  it('rejects an unknown sort_by value', async () => {
+    const { error } = await admin.rpc('list_branches_analytics', {
+      p_sort_by: 'banana',
+      p_limit: 1,
+      p_offset: 0,
+    });
+    expect(error).not.toBeNull();
+    expect(error?.message).toMatch(/sort/i);
+  });
+
+  it('filters branches by city_id', async () => {
+    const { data, error } = await admin.rpc('list_branches_analytics', {
+      p_search: PREFIX,
+      p_city_id: ids.cityId,
+      p_limit: 50,
+      p_offset: 0,
+    });
+    expect(error).toBeNull();
+    const parsed = parseBranchAnalyticsPage(data);
+    // The original city has 3 branches; the other city has 1.
+    expect(parsed.totalCount).toBe(3);
+    expect(parsed.rows.every((row) => row.branchId !== ids.branchOtherId)).toBe(true);
+  });
+
+  it('filters branches by district_id', async () => {
+    const { data, error } = await admin.rpc('list_branches_analytics', {
+      p_search: PREFIX,
+      p_district_id: ids.districtOtherId,
+      p_limit: 50,
+      p_offset: 0,
+    });
+    expect(error).toBeNull();
+    const parsed = parseBranchAnalyticsPage(data);
+    expect(parsed.totalCount).toBe(1);
+    expect(parsed.rows[0]?.branchId).toBe(ids.branchOtherId);
+  });
+
+  it('returns no rows when city_id and district_id point to mismatched branches', async () => {
+    const { data, error } = await admin.rpc('list_branches_analytics', {
+      p_search: PREFIX,
+      p_city_id: ids.cityId,
+      p_district_id: ids.districtOtherId,
+      p_limit: 50,
+      p_offset: 0,
+    });
+    expect(error).toBeNull();
+    const parsed = parseBranchAnalyticsPage(data);
+    expect(parsed.totalCount).toBe(0);
+    expect(parsed.rows).toEqual([]);
+  });
+
+  it('rejects an unknown city_id', async () => {
+    const { error } = await admin.rpc('list_branches_analytics', {
+      p_city_id: '00000000-0000-0000-0000-000000000000',
+      p_limit: 1,
+      p_offset: 0,
+    });
+    expect(error).not.toBeNull();
+    expect(error?.message).toMatch(/city/i);
+  });
+
+  it('rejects an unknown district_id', async () => {
+    const { error } = await admin.rpc('list_branches_analytics', {
+      p_district_id: '00000000-0000-0000-0000-000000000000',
+      p_limit: 1,
+      p_offset: 0,
+    });
+    expect(error).not.toBeNull();
+    expect(error?.message).toMatch(/district/i);
   });
 });

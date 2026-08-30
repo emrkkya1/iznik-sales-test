@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 
 // These tests verify the balance calculation logic
 // Actual RPC tests would require a running Supabase instance
+//
+// Canonical convention (M20): "+ means they owe us". balance = sales -
+// payments. Positive = Alacak (branch owes bakery), negative = Borç
+// (bakery owes branch).
 
 describe('Balance Calculation', () => {
   describe('recalculate_branch_balance', () => {
@@ -29,7 +33,7 @@ describe('Balance Calculation', () => {
       expect(balance).toBe(600); // (1000 + 500) - (800 + 100)
     });
 
-    it('should handle negative balance (credit)', () => {
+    it('should handle negative balance (Borç — overpayment)', () => {
       const deliveries = [
         { totalSalesAmount: 100, deletedAt: null },
       ];
@@ -92,6 +96,7 @@ describe('Balance Calculation', () => {
 
   describe('Balance after operations', () => {
     it('should recalculate after delivery creation', () => {
+      // Canonical: a delivery grows the receivable.
       const previousBalance = 1000;
       const newDeliveryAmount = 500;
       const newPaymentAmount = 300;
@@ -101,27 +106,32 @@ describe('Balance Calculation', () => {
     });
 
     it('should recalculate after delivery edit', () => {
+      // Canonical: remove the old sale (reduce receivable), add the new
+      // one, then apply the payment.
       const previousBalance = 1000;
       const oldDeliveryAmount = 500;
       const newDeliveryAmount = 600;
       const paymentAmount = 300;
 
-      // Remove old delivery, add new delivery
-      const newBalance = previousBalance - oldDeliveryAmount + newDeliveryAmount - paymentAmount;
+      const newBalance =
+        previousBalance - oldDeliveryAmount + newDeliveryAmount - paymentAmount;
       expect(newBalance).toBe(800);
     });
 
     it('should recalculate after delivery delete', () => {
+      // Canonical: removing the delivery removes the receivable; the
+      // related payment must be netted off the previous balance too.
       const previousBalance = 1000;
       const deletedDeliveryAmount = 500;
       const relatedPaymentAmount = 300;
 
-      // Remove delivery and related payment
-      const newBalance = previousBalance - deletedDeliveryAmount + relatedPaymentAmount;
+      const newBalance =
+        previousBalance - deletedDeliveryAmount + relatedPaymentAmount;
       expect(newBalance).toBe(800);
     });
 
     it('should recalculate after manual payment', () => {
+      // Canonical: a payment reduces the receivable.
       const previousBalance = 1000;
       const manualPaymentAmount = 500;
 

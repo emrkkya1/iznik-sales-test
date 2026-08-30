@@ -1,17 +1,18 @@
+import { BalanceAmount } from '@/components/ui/balance-amount';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { formatCount } from '@/utils/formatCount';
-import { formatCurrency, getBalanceTone } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
 
 type SummaryCardProps = {
   title: string;
   value: string | number | null;
   format?: 'currency' | 'count' | 'text' | 'percent' | 'quantity-delta';
-  // Used by Güncel Bakiye card: positive balance paints info (we are owed),
-  // negative balance paints destructive (we owe). Ignored for non-currency
-  // values.
+  // Used by Güncel Bakiye card: positive balance (Alacak) paints info/blue,
+  // negative balance (Borç) paints destructive/red. Ignored for non-
+  // currency values.
   colorCoded?: boolean;
   /** Optional small line under the main value (e.g. "142 alınan"). */
   secondaryValue?: string;
@@ -22,10 +23,10 @@ type SummaryCardProps = {
   subtitle?: string;
   isLoading?: boolean;
   className?: string;
-  // When true AND the value is a number AND format is currency, renders a
-  // subtle "Alacak" / "Borç" / "Bakiye" label next to the value so the
-  // meaning of the number is unambiguous at a glance.
-  showBalanceTone?: boolean;
+  // When true AND the value is a number AND format is currency, renders the
+  // Alacak/Borç label next to the amount via BalanceAmount. Zero balance
+  // shows no label.
+  showBalanceLabel?: boolean;
 };
 
 function renderValue(value: string | number | null, format: SummaryCardProps['format']): string {
@@ -40,15 +41,6 @@ function renderValue(value: string | number | null, format: SummaryCardProps['fo
   return String(value);
 }
 
-function colorClassFor(value: number, colorCoded: boolean | undefined): string | undefined {
-  if (!colorCoded) return undefined;
-  // Positive balance = "Alacak" (the branch owes us) → info/blue.
-  // Negative balance = "Borç" (we owe the branch) → destructive/red.
-  if (value > 0) return 'text-info';
-  if (value < 0) return 'text-destructive';
-  return 'text-foreground';
-}
-
 // Branch Hub summary card. Sits 4-up in a landscape HStack via `flex-1`.
 export function SummaryCard({
   title,
@@ -60,19 +52,11 @@ export function SummaryCard({
   emptyLabel,
   subtitle,
   isLoading = false,
-  showBalanceTone = false,
+  showBalanceLabel = false,
   className,
 }: SummaryCardProps) {
-  const numericValue = typeof value === 'number' ? value : 0;
   const isCurrencyNumber =
     format === 'currency' && typeof value === 'number';
-  const valueClass =
-    isCurrencyNumber && colorCoded
-      ? colorClassFor(numericValue, colorCoded)
-      : 'text-foreground';
-
-  const toneLabel =
-    showBalanceTone && isCurrencyNumber ? getBalanceTone(numericValue) : null;
 
   const secondaryClass =
     secondaryTone === 'destructive'
@@ -103,19 +87,18 @@ export function SummaryCard({
           <Text size="xl" bold className="text-muted-foreground">
             {emptyLabel ?? 'Veri yok'}
           </Text>
+        ) : isCurrencyNumber && colorCoded ? (
+          <BalanceAmount
+            value={value as number}
+            size="xl"
+            bold
+            showLabel={showBalanceLabel}
+          />
         ) : (
           <HStack space="xs" className="items-baseline">
-            <Text size="xl" bold className={valueClass}>
+            <Text size="xl" bold className="text-foreground">
               {renderValue(value, format)}
             </Text>
-            {toneLabel && toneLabel !== 'Bakiye' ? (
-              <Text
-                size="xs"
-                className="text-muted-foreground"
-              >
-                {toneLabel}
-              </Text>
-            ) : null}
           </HStack>
         )}
         {secondaryValue ? (

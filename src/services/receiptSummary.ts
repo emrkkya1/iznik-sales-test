@@ -17,13 +17,13 @@ interface BuildReceiptSummaryParams {
 
 // Builds a receipt summary from an existing delivery and its related rows.
 //
-// Cash-flow convention ("+ means we got money"). The DB stores cash in
-// hand directly, so:
+// Canonical balance convention (M20, "+ means they owe us"). The DB stores
+// the receivable directly, so:
 //   newBalance      = branch.currentBalance
-//                                       — cash in hand after this delivery
-//   previousBalance = branch.currentBalance + sales - payment
-//                                       — cash in hand before this delivery
-// (delivery reduces cash by `sales`, payment adds `payment`).
+//                                       — receivable after this delivery
+//   previousBalance = branch.currentBalance - sales + payment
+//                                       — receivable before this delivery
+// (delivery grows the receivable by `sales`, payment shrinks it).
 export function buildReceiptSummary({
   delivery,
   items,
@@ -44,7 +44,7 @@ export function buildReceiptSummary({
 
   const paymentAmount = payments.reduce((sum, p) => sum + p.amount, 0);
   const previousBalance =
-    (branch.currentBalance ?? 0) + delivery.totalSalesAmount - paymentAmount;
+    (branch.currentBalance ?? 0) - delivery.totalSalesAmount + paymentAmount;
 
   return {
     deliveryId: delivery.id,

@@ -21,6 +21,8 @@ export const supabaseAnalyticsRepository: AnalyticsRepository = {
       p_date_from: filters.dateFrom,
       p_date_to: filters.dateTo,
       p_days_of_week: filters.daysOfWeek,
+      p_city_id: filters.cityId,
+      p_district_id: filters.districtId,
       p_sort_by: filters.sortBy ?? 'name',
       p_sort_dir: filters.sortDir ?? 'asc',
       p_limit: pagination.limit,

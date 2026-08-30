@@ -20,7 +20,7 @@ import type {
   CityWithCounts,
   DistrictWithCounts,
 } from '@/types';
-import { getBalanceTone } from '@/utils/formatters';
+import { getBalanceLabel } from '@/utils/formatters';
 
 import { ActionMenu, type ActionMenuItem } from '../../components/admin/ActionMenu';
 import { Breadcrumb } from '../../components/admin/Breadcrumb';
@@ -40,8 +40,9 @@ type ActionTarget =
   | { kind: 'district'; entity: DistrictWithCounts }
   | { kind: 'branch'; entity: BranchWithContext };
 
-// DB stores cash in hand directly (cash-flow convention). Positive =
-// cash in hand from this branch, negative = cash missing.
+// Canonical balance convention (M20). Positive = Alacak (branch owes us),
+// negative = Borç (we owe branch), zero = settled. We never render a
+// signed value; the colour and label encode direction.
 function balanceTone(balance: number): 'positive' | 'negative' | 'neutral' {
   if (balance > 0) return 'positive';
   if (balance < 0) return 'negative';
@@ -49,12 +50,10 @@ function balanceTone(balance: number): 'positive' | 'negative' | 'neutral' {
 }
 
 function formatBalance(balance: number): string {
-  const sign = balance > 0 ? '+' : balance < 0 ? '-' : '';
-  const formatted = new Intl.NumberFormat('tr-TR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
   }).format(Math.abs(balance));
-  return `${sign}${formatted} ₺`;
 }
 
 export function CitiesScreen() {
@@ -270,11 +269,11 @@ export function CitiesScreen() {
             rows={branchesQuery.data ?? []}
             keyExtractor={(b) => b.id}
             renderRow={(branch) => (
-<GeographyListRow
+              <GeographyListRow
                 title={branch.name}
                 subtitle={`Bakiye ${formatBalance(branch.currentBalance)}${
                   branch.currentBalance !== 0
-                    ? ` · ${getBalanceTone(branch.currentBalance)}`
+                    ? ` · ${getBalanceLabel(branch.currentBalance)}`
                     : ''
                 }`}
                 isActive={branch.isActive}

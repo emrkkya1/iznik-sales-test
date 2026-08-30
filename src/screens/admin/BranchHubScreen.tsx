@@ -111,12 +111,13 @@ export function BranchHubScreen() {
         <HStack space="md" className="items-stretch">
           <SummaryCard
             title="Güncel Bakiye"
-            // DB stores cash in hand directly (cash-flow convention: positive
-            // = cash in hand from this branch, negative = cash missing).
+            // Canonical convention (M20): positive = Alacak (they owe us),
+            // negative = Borç (we owe them). BalanceAmount handles colour
+            // and label so we never show a leading "-".
             value={data?.currentBalance ?? null}
             format="currency"
             colorCoded
-            showBalanceTone
+            showBalanceLabel
             isLoading={isLoading}
           />
           <SummaryCard

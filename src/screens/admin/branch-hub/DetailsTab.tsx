@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { BalanceAmount } from '@/components/ui/balance-amount';
 import { Box } from '@/components/ui/box';
 import { HStack } from '@/components/ui/hstack';
 import { Spinner } from '@/components/ui/spinner';
@@ -8,22 +9,27 @@ import { VStack } from '@/components/ui/vstack';
 import { useBranchHubSummary } from '@/hooks';
 import { formatDateForDisplay } from '@/utils/dates';
 import { formatCount } from '@/utils/formatCount';
-import { formatCurrency, getBalanceTone } from '@/utils/formatters';
+import { formatBalanceAmount, getBalanceLabel } from '@/utils/formatters';
 import { formatRelativeDate } from '@/utils/formatRelativeDate';
 
 type DetailsTabProps = {
   branchId: string;
 };
 
-function Row({
-  label,
-  value,
-  hint,
-}: {
+type RowProps = {
   label: string;
   value: ReactNode;
   hint?: string;
-}) {
+  tone?: 'info' | 'destructive' | 'muted';
+};
+
+function Row({ label, value, hint, tone = 'muted' }: RowProps) {
+  const hintClass =
+    tone === 'info'
+      ? 'text-info'
+      : tone === 'destructive'
+        ? 'text-destructive'
+        : 'text-muted-foreground';
   return (
     <Box className="border-b border-border py-3">
       <HStack className="items-center justify-between">
@@ -35,7 +41,7 @@ function Row({
         </Text>
       </HStack>
       {hint ? (
-        <Text size="xs" className="mt-1 text-muted-foreground">
+        <Text size="xs" className={`mt-1 ${hintClass}`}>
           {hint}
         </Text>
       ) : null}
@@ -46,6 +52,41 @@ function Row({
 function formatReturnRate(rate: number | null): string {
   if (rate === null) return 'Veri yok';
   return `%${rate.toFixed(1).replace(/\.0$/, '')}`;
+}
+
+function formatBalanceCell(value: number | null): ReactNode {
+  if (value === null) return '—';
+  const label = getBalanceLabel(value);
+  return (
+    <HStack space="xs" className="items-baseline">
+      <Text size="sm" bold className="text-foreground">
+        {formatBalanceAmount(value)}
+      </Text>
+      {label ? (
+        <Text size="xs" className="text-muted-foreground">
+          {label}
+        </Text>
+      ) : null}
+    </HStack>
+  );
+}
+
+function formatDeltaCell(delta: number): ReactNode {
+  // Canonical: positive delta = Alacak (sales > payments), negative =
+  // Borç. Show abs amount + label, never a signed number.
+  const label = getBalanceLabel(delta);
+  return (
+    <HStack space="xs" className="items-baseline">
+      <Text size="sm" bold className="text-foreground">
+        {formatBalanceAmount(delta)}
+      </Text>
+      {label ? (
+        <Text size="xs" className="text-muted-foreground">
+          {label}
+        </Text>
+      ) : null}
+    </HStack>
+  );
 }
 
 // Read-only metadata panel. Cards above already surface the headline
@@ -66,6 +107,15 @@ export function DetailsTab({ branchId }: DetailsTabProps) {
       ? d.currentBalance - d.openingBalance
       : null;
 
+  const deltaTone: RowProps['tone'] =
+    delta === null
+      ? 'muted'
+      : delta > 0
+        ? 'info'
+        : delta < 0
+          ? 'destructive'
+          : 'muted';
+
   return (
     <Box className="m-6 rounded-2xl border border-border bg-card p-4">
       <VStack space="xs">
@@ -75,7 +125,7 @@ export function DetailsTab({ branchId }: DetailsTabProps) {
         <Row label="Şehir / İlçe" value={`${d.cityName} / ${d.districtName}`} />
         <Row
           label="Açılış Bakiyesi"
-          value={`${formatCurrency(d.openingBalance)} · ${getBalanceTone(d.openingBalance)}`}
+          value={formatBalanceCell(d.openingBalance)}
           hint={
             typeof d.branchCreatedAt === 'string' && d.branchCreatedAt
               ? `${formatDateForDisplay(d.branchCreatedAt)}'ten beri`
@@ -128,19 +178,18 @@ export function DetailsTab({ branchId }: DetailsTabProps) {
         <Text size="md" bold className="pb-2 pt-4 text-foreground">
           Bakiye Kırılımı
         </Text>
-        <Row label="Açılış" value={formatCurrency(d.openingBalance)} />
+        <Row label="Açılış" value={formatBalanceCell(d.openingBalance)} />
         <Row
           label="Net Değişim"
-          value={
-            delta === null
-              ? '—'
-              : `${delta >= 0 ? '+' : ''}${formatCurrency(delta)}`
-          }
-          hint="Tahsilatlar − Satışlar"
+          value={delta === null ? '—' : formatDeltaCell(delta)}
+          tone={deltaTone}
+          hint="Satışlar − Tahsilatlar"
         />
         <Row
           label="Güncel Bakiye"
-          value={`${formatCurrency(d.currentBalance)} · ${getBalanceTone(d.currentBalance)}`}
+          value={
+            <BalanceAmount value={d.currentBalance ?? 0} size="sm" bold />
+          }
           hint="Açılış + Net Değişim"
         />
       </VStack>

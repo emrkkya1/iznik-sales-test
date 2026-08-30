@@ -6,6 +6,7 @@ import { CheckoutSummary } from '@/components/domain/checkout-summary';
 import { PaymentReceivedInput } from '@/components/domain/payment-received-input';
 import { ProductCard } from '@/components/domain/product-card';
 import { Amount } from '@/components/ui/amount';
+import { BalanceAmount } from '@/components/ui/balance-amount';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { DateField } from '@/components/ui/date-field';
@@ -167,19 +168,7 @@ export function StaffHomeScreen() {
             <Text size="sm" className="text-muted-foreground">
               Yeni Bakiye
             </Text>
-            <Amount
-              size="sm"
-              bold
-              value={receipt.newBalance}
-              showSign
-              tone={
-                receipt.newBalance > 0
-                  ? 'info'
-                  : receipt.newBalance < 0
-                    ? 'destructive'
-                    : 'default'
-              }
-            />
+            <BalanceAmount value={receipt.newBalance} size="sm" bold showLabel />
           </HStack>
         </VStack>
       </ResultState>
@@ -228,7 +217,9 @@ export function StaffHomeScreen() {
                 <DateField
                   label="Tarih"
                   value={draft.date}
-                  onChange={draft.setDate}
+                  onChange={(next) => {
+                    if (next) draft.setDate(next);
+                  }}
                 />
               </VStack>
             </Box>

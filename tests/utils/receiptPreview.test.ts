@@ -17,14 +17,15 @@ function product(id: string, name: string, price: number): BranchProductWithPric
 
 describe('computeReceiptPreview', () => {
   it('computes required amount and lines from quantities', () => {
-    // Cash-flow convention ("+ means we got money"): previousBalance = 100
-    // means we have 100 cash in hand; delivery of 40 reduces it to 60.
+    // Canonical convention ("+ means they owe us"): previousBalance = 100
+    // means the branch already owes us 100; a delivery of 40 increases it
+    // to 140 (more receivable from the branch).
     const products = [product('p1', 'Ekmek', 10), product('p2', 'Simit', 5)];
     const preview = computeReceiptPreview(products, { p1: 3, p2: 2 }, 0, 100);
 
     expect(preview.lines).toHaveLength(2);
     expect(preview.requiredAmount).toBe(40);
-    expect(preview.resultingBalance).toBe(60);
+    expect(preview.resultingBalance).toBe(140);
   });
 
   it('skips products with zero or missing quantity', () => {
@@ -35,33 +36,31 @@ describe('computeReceiptPreview', () => {
     expect(preview.requiredAmount).toBe(20);
   });
 
-  it('handles partial payment and positive resulting balance', () => {
-    // Cash-flow convention: 50 payment > 20 delivery → 30 cash in hand
-    // after settling.
+  it('handles partial payment reducing the receivable', () => {
+    // Canonical: previous 0 + delivery 20 - payment 50 = -30 (Borç;
+    // we owe the branch after overpaying).
     const products = [product('p1', 'Ekmek', 10)];
     const preview = computeReceiptPreview(products, { p1: 2 }, 50, 0);
 
     expect(preview.requiredAmount).toBe(20);
-    expect(preview.resultingBalance).toBe(30);
+    expect(preview.resultingBalance).toBe(-30);
   });
 
-  it('handles overpayment producing positive balance', () => {
-    // Cash-flow convention: 25 payment > 10 delivery → 15 cash in hand
-    // (we have credit with the branch).
+  it('handles overpayment producing a Borç (negative) balance', () => {
+    // Canonical: previous 0 + delivery 10 - payment 25 = -15 (Borç)
     const products = [product('p1', 'Ekmek', 10)];
     const preview = computeReceiptPreview(products, { p1: 1 }, 25, 0);
 
-    expect(preview.resultingBalance).toBe(15);
+    expect(preview.resultingBalance).toBe(-15);
   });
 
-  it('handles a delivery with no payment reducing cash in hand', () => {
-    // Cash-flow convention: no cash, no payment, 40 delivery → -40 cash
-    // in hand (we're missing 40).
+  it('handles a delivery with no payment growing the receivable', () => {
+    // Canonical: no balance, no payment, 40 delivery → +40 Alacak.
     const products = [product('p1', 'Ekmek', 10), product('p2', 'Simit', 5)];
     const preview = computeReceiptPreview(products, { p1: 3, p2: 2 }, 0, 0);
 
     expect(preview.requiredAmount).toBe(40);
-    expect(preview.resultingBalance).toBe(-40);
+    expect(preview.resultingBalance).toBe(40);
   });
 
   it('rounds totals to two decimals', () => {
