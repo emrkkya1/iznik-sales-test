@@ -10,6 +10,15 @@ import type {
   UpdateDeliveryInput,
 } from '@/types';
 
+import { BRANCH_ANALYTICS_QUERY_KEY } from './useBranchesAnalytics';
+
+function invalidateBranchData(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ['deliveries'] });
+  queryClient.invalidateQueries({ queryKey: ['payments'] });
+  queryClient.invalidateQueries({ queryKey: ['balance'] });
+  queryClient.invalidateQueries({ queryKey: BRANCH_ANALYTICS_QUERY_KEY });
+}
+
 export function useCreateDelivery() {
   const queryClient = useQueryClient();
   const idempotencyKeyRef = useRef<string | null>(null);
@@ -33,8 +42,7 @@ export function useCreateDelivery() {
         result: data,
       });
       idempotencyKeyRef.current = null;
-      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
-      queryClient.invalidateQueries({ queryKey: ['balance'] });
+      invalidateBranchData(queryClient);
     },
     onError: (error) => {
       logMutation('createDelivery', 'error', error);
@@ -53,8 +61,7 @@ export function useUpdateDelivery() {
     },
     onSuccess: (data) => {
       logMutation('updateDelivery', 'success', { result: data });
-      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
-      queryClient.invalidateQueries({ queryKey: ['balance'] });
+      invalidateBranchData(queryClient);
     },
     onError: (error) => {
       logMutation('updateDelivery', 'error', error);
@@ -73,8 +80,7 @@ export function useSoftDeleteDelivery() {
     },
     onSuccess: (_data, { id }) => {
       logMutation('softDeleteDelivery', 'success', { id });
-      queryClient.invalidateQueries({ queryKey: ['deliveries'] });
-      queryClient.invalidateQueries({ queryKey: ['balance'] });
+      invalidateBranchData(queryClient);
     },
     onError: (error) => {
       logMutation('softDeleteDelivery', 'error', error);
@@ -93,8 +99,7 @@ export function useRecordManualPayment() {
     },
     onSuccess: (data) => {
       logMutation('recordManualPayment', 'success', { result: data });
-      queryClient.invalidateQueries({ queryKey: ['balance'] });
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
+      invalidateBranchData(queryClient);
     },
     onError: (error) => {
       logMutation('recordManualPayment', 'error', error);

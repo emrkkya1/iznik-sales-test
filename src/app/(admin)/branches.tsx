@@ -1,5 +1,5 @@
-import { BranchesScreen } from '@/screens/admin';
+import { BranchesTableScreen } from '@/screens/admin';
 
 export default function BranchesRoute() {
-  return <BranchesScreen />;
+  return <BranchesTableScreen />;
 }

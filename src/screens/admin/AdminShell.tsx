@@ -7,6 +7,7 @@ import type { Href } from 'expo-router';
 import { Box } from '@/components/ui/box';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { HStack } from '@/components/ui/hstack';
+import { NetworkBanner } from '@/components/ui/network-banner';
 import { Pressable } from '@/components/ui/pressable';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
@@ -23,11 +24,18 @@ import { useSignOut } from '@/hooks/useSignOut';
 import { useAuthStore } from '@/store';
 import { formatDateForDisplay, getIstanbulToday } from '@/utils/dates';
 
+// Tab order after the admin overhaul:
+//   1. Özet            → /summary
+//   2. Şubeler         → /branches  (flat, filterable, sortable table)
+//   3. Ürünler         → /products   (placeholder)
+//   4. Şehirler & İlçe → /cities     (drill-down router)
+//   5. Ayarlar         → /settings   (includes a Kayıtlar stub for now)
+// Kayıtlar (formerly /records) is reachable via the Ayarlar stub tile.
 const NAV_ITEMS: { href: Href; label: string; icon: React.ElementType }[] = [
   { href: '/summary', label: 'Özet', icon: BarChart3Icon },
   { href: '/branches', label: 'Şubeler', icon: StoreIcon },
   { href: '/products', label: 'Ürünler', icon: PackageIcon },
-  { href: '/records', label: 'Kayıtlar', icon: ListIcon },
+  { href: '/cities', label: 'Şehirler & İlçe', icon: ListIcon },
   { href: '/settings', label: 'Ayarlar', icon: SettingsIcon },
 ];
 
@@ -91,6 +99,8 @@ export function AdminShell({ children }: AdminShellProps) {
             </Pressable>
           </HStack>
         </HStack>
+
+        <NetworkBanner />
 
         <Box style={{ flex: 1 }} className="bg-background">
           {children}

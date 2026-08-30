@@ -5,13 +5,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Box } from '@/components/ui/box';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { HStack } from '@/components/ui/hstack';
-import { BanknoteIcon, PackageIcon, StoreIcon } from '@/components/ui/icon';
+import { BanknoteIcon, ReceiptIcon, TruckIcon } from '@/components/ui/icon';
 import {
-  useBranchDistribution,
+  useBranchIncome,
+  useBranchReturnRate,
   useDailySeries,
-  useProductDistribution,
   useSummaryKpis,
 } from '@/hooks';
+import { formatCount } from '@/utils/formatCount';
 import type { SummaryRange } from '@/types';
 
 import { DailyChartCard } from '../../components/admin/DailyChartCard';
@@ -27,8 +28,8 @@ export function SummaryScreen() {
   const queryClient = useQueryClient();
 
   const kpis = useSummaryKpis(range);
-  const productDist = useProductDistribution(range);
-  const branchDist = useBranchDistribution(range);
+  const branchIncome = useBranchIncome(range);
+  const branchReturnRate = useBranchReturnRate(range);
   const dailySeries = useDailySeries(range);
 
   const refreshAll = () => {
@@ -36,11 +37,22 @@ export function SummaryScreen() {
   };
 
   const refreshing =
-    (kpis.isFetching || productDist.isFetching || branchDist.isFetching || dailySeries.isFetching) &&
+    (kpis.isFetching ||
+      branchIncome.isFetching ||
+      branchReturnRate.isFetching ||
+      dailySeries.isFetching) &&
     (kpis.isPlaceholderData ||
-      productDist.isPlaceholderData ||
-      branchDist.isPlaceholderData ||
+      branchIncome.isPlaceholderData ||
+      branchReturnRate.isPlaceholderData ||
       dailySeries.isPlaceholderData);
+
+  const deliveredQty = kpis.data?.deliveredQty ?? null;
+  const returnedQty = kpis.data?.returnedQty ?? null;
+  const returnRate = kpis.data?.returnRate ?? null;
+  const deliveredReturnedDisplay =
+    deliveredQty !== null && returnedQty !== null
+      ? `${formatCount(deliveredQty)} / ${formatCount(returnedQty)}`
+      : null;
 
   return (
     <Box style={{ flex: 1 }} className="bg-background">
@@ -78,19 +90,19 @@ export function SummaryScreen() {
             onRetry={kpis.refetch}
           />
           <KpiCard
-            icon={StoreIcon}
-            title="Aktif Şube"
-            value={kpis.data?.activeBranchCount ?? null}
+            icon={TruckIcon}
+            title="Verilen / Alınan"
+            value={deliveredReturnedDisplay}
             format="count"
             isLoading={kpis.isLoading}
             isError={kpis.isError}
             onRetry={kpis.refetch}
           />
           <KpiCard
-            icon={PackageIcon}
-            title="Aktif Ürün"
-            value={kpis.data?.activeProductCount ?? null}
-            format="count"
+            icon={ReceiptIcon}
+            title="İade Oranı"
+            value={returnRate}
+            format="percent"
             isLoading={kpis.isLoading}
             isError={kpis.isError}
             onRetry={kpis.refetch}
@@ -99,18 +111,18 @@ export function SummaryScreen() {
 
         <HStack space="md" className="items-stretch">
           <DistributionCard
-            title="Ürün Dağılımı"
-            rows={productDist.data ?? []}
-            isLoading={productDist.isLoading}
-            isError={productDist.isError}
-            onRetry={productDist.refetch}
+            title="Gelir Dağılımı (Şubeler)"
+            rows={branchIncome.data ?? []}
+            isLoading={branchIncome.isLoading}
+            isError={branchIncome.isError}
+            onRetry={branchIncome.refetch}
           />
           <DistributionCard
-            title="Şube Dağılımı"
-            rows={branchDist.data ?? []}
-            isLoading={branchDist.isLoading}
-            isError={branchDist.isError}
-            onRetry={branchDist.refetch}
+            title="İade Oranı (Şubeler)"
+            rows={branchReturnRate.data ?? []}
+            isLoading={branchReturnRate.isLoading}
+            isError={branchReturnRate.isError}
+            onRetry={branchReturnRate.refetch}
           />
         </HStack>
 

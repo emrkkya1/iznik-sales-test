@@ -25,8 +25,14 @@ export {
   useSummaryKpis,
   useProductDistribution,
   useBranchDistribution,
+  useBranchIncome,
+  useBranchReturnRate,
   useDailySeries,
 } from './useReports';
+export {
+  BRANCH_ANALYTICS_QUERY_KEY,
+  useBranchesAnalytics,
+} from './useBranchesAnalytics';
 export {
   useCitiesWithCounts,
   useDistrictsWithCounts,

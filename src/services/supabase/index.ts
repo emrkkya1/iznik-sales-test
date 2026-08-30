@@ -6,4 +6,5 @@ export { supabaseDeliveryRepository } from './deliveries';
 export { supabasePaymentRepository } from './payments';
 export { supabaseLedgerRepository } from './ledger';
 export { supabaseAdminLocationRepository } from './adminLocations';
+export { supabaseAnalyticsRepository } from './analytics';
 export { supabaseReportsRepository } from './reports';

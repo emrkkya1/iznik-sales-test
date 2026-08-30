@@ -34,6 +34,24 @@ export const supabaseReportsRepository: ReportsRepository = {
     return (data ?? []) as unknown as DistributionRow[];
   },
 
+  async getBranchIncome(range) {
+    const { data, error } = await supabaseClient.rpc(
+      'report_branch_income',
+      { p_range: range, p_limit: 100 },
+    );
+    if (error) throw error;
+    return (data ?? []) as unknown as DistributionRow[];
+  },
+
+  async getBranchReturnRate(range) {
+    const { data, error } = await supabaseClient.rpc(
+      'report_branch_return_rate',
+      { p_range: range, p_limit: 100 },
+    );
+    if (error) throw error;
+    return (data ?? []) as unknown as DistributionRow[];
+  },
+
   async getDailySeries(range) {
     const { data, error } = await supabaseClient.rpc('report_daily_series', {
       p_range: range,

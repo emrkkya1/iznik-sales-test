@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import type { DistributionRow } from '@/types';
+import { CHART_PALETTE, chartColorAt } from '@/utils/chartPalette';
 import { mergeTopDistribution } from '@/utils/distribution';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -19,22 +20,12 @@ type DistributionCardProps = {
   isError?: boolean;
   onRetry?: () => void;
   className?: string;
+  palette?: readonly string[];
 };
 
-// 8 palette slots: 7 distinct categorical hues + 1 grey for merged "Diğer".
-// Brown is intentionally excluded to keep slice distinction maximal on the
-// cream background. Grey is reserved for the synthetic merged slice so the
-// legend visually groups it as "less important".
-const PIE_COLORS = [
-  '#004C6E', // navy
-  '#C43428', // red
-  '#2E7D32', // green
-  '#F57C00', // orange
-  '#6A1B9A', // purple
-  '#00838F', // teal
-  '#D81B60', // pink/magenta
-  '#9CA3AF', // neutral grey (Diğer only)
-];
+// Brand-aligned palette sourced from `--chart-1`…`--chart-7` tokens.
+// Caller may override (e.g. a per-chart custom scheme).
+const DEFAULT_PALETTE: readonly string[] = CHART_PALETTE;
 
 export function DistributionCard({
   title,
@@ -43,6 +34,7 @@ export function DistributionCard({
   isError = false,
   onRetry,
   className,
+  palette = DEFAULT_PALETTE,
 }: DistributionCardProps) {
   const { merged, total } = useMemo(() => {
     const { merged } = mergeTopDistribution(rows, 7);
@@ -52,12 +44,16 @@ export function DistributionCard({
 
   const data = useMemo(
     () =>
-      merged.map((row, i) => ({
-        value: row.value,
-        color: PIE_COLORS[i % PIE_COLORS.length],
-        gradientCenterColor: PIE_COLORS[i % PIE_COLORS.length],
-      })),
-    [merged],
+      merged.map((row, i) => {
+        const color = chartColorAt(i);
+        const sliceColor = palette[i % palette.length] ?? color;
+        return {
+          value: row.value,
+          color: sliceColor,
+          gradientCenterColor: sliceColor,
+        };
+      }),
+    [merged, palette],
   );
 
   return (
@@ -92,7 +88,7 @@ export function DistributionCard({
           <VStack space="xs">
             {merged.map((row, i) => {
               const pct = total > 0 ? (row.value / total) * 100 : 0;
-              const color = PIE_COLORS[i % PIE_COLORS.length];
+              const sliceColor = palette[i % palette.length] ?? chartColorAt(i);
               return (
                 <HStack
                   key={row.id}
@@ -101,7 +97,7 @@ export function DistributionCard({
                 >
                   <HStack space="sm" className="flex-1 items-center">
                     <Box
-                      style={{ backgroundColor: color }}
+                      style={{ backgroundColor: sliceColor }}
                       className="h-3 w-3 rounded-full"
                     />
                     <Text

@@ -8,7 +8,13 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['tests/**/*.{test,spec}.{ts,tsx}', 'src/**/*.{test,spec}.{ts,tsx}'],
+    include: [
+      'tests/utils/**/*.{test,spec}.{ts,tsx}',
+      'tests/hooks/**/*.{test,spec}.{ts,tsx}',
+      'tests/services/**/*.{test,spec}.{ts,tsx}',
+      'src/**/*.{test,spec}.{ts,tsx}',
+    ],
+    exclude: ['node_modules/**', 'tests/integration/**'],
   },
   resolve: {
     alias: {

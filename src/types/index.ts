@@ -44,6 +44,13 @@ export type {
   SetBranchProductPriceInput,
   SetBranchProductActiveInput,
   ActivateBranchProductInput,
+  DayOfWeek,
+  BranchAnalyticsStatus,
+  BranchAnalyticsSortBy,
+  BranchAnalyticsSortDir,
+  BranchAnalyticsFilters,
+  BranchAnalyticsRow,
+  BranchAnalyticsPage,
 } from './domain.types';
 
 export type AuthSession = {

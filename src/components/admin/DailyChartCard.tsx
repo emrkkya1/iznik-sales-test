@@ -8,15 +8,24 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import type { DailySeriesResult } from '@/types';
+import {
+  CHART_AXIS_COLOR,
+  CHART_LABEL_COLOR,
+  CHART_PRIMARY_COLOR,
+} from '@/utils/chartPalette';
 import { parseIsoDate } from '@/utils/dates';
 import { formatCurrency } from '@/utils/formatters';
 
 type DailyChartCardProps = {
   series: DailySeriesResult | undefined;
+  title?: string;
   isLoading?: boolean;
   isError?: boolean;
   onRetry?: () => void;
   className?: string;
+  lineColor?: string;
+  axisColor?: string;
+  labelColor?: string;
 };
 
 // Formats a YYYY-MM-DD bucket into a short axis label per granularity.
@@ -55,10 +64,14 @@ function formatBucketLabel(
 
 export function DailyChartCard({
   series,
+  title = 'Günlük Ciro',
   isLoading = false,
   isError = false,
   onRetry,
   className,
+  lineColor = CHART_PRIMARY_COLOR,
+  axisColor = CHART_AXIS_COLOR,
+  labelColor = CHART_LABEL_COLOR,
 }: DailyChartCardProps) {
   const { points, total, lineData } = useMemo(() => {
     const pts = series?.points ?? [];
@@ -80,7 +93,7 @@ export function DailyChartCard({
     >
       <VStack space="md">
         <Text size="md" bold className="text-foreground">
-          Günlük Ciro
+          {title}
         </Text>
 
         {isError ? (
@@ -94,13 +107,13 @@ export function DailyChartCard({
             <LineChart
               data={lineData}
               thickness={2}
-              color="#6A4715"
+              color={lineColor}
               hideRules
               yAxisLabelPrefix="₺"
-              yAxisTextStyle={{ color: '#85653D', fontSize: 11 }}
-              xAxisLabelTextStyle={{ color: '#85653D', fontSize: 11 }}
-              xAxisColor="#E5DCCD"
-              yAxisColor="#E5DCCD"
+              yAxisTextStyle={{ color: labelColor, fontSize: 11 }}
+              xAxisLabelTextStyle={{ color: labelColor, fontSize: 11 }}
+              xAxisColor={axisColor}
+              yAxisColor={axisColor}
               noOfSections={4}
               spacing={Math.max(28, Math.min(80, 600 / lineData.length))}
               initialSpacing={12}

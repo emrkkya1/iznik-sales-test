@@ -57,7 +57,7 @@ function formatBalance(balance: number): string {
   return `${sign}${formatted} ₺`;
 }
 
-export function BranchesScreen() {
+export function CitiesScreen() {
   const router = useRouter();
   const { level, selectedCityId, selectedDistrictId } = useGeographyDrilldown();
 
@@ -226,7 +226,7 @@ export function BranchesScreen() {
                 isActive={city.isActive}
                 onPress={() =>
                   router.push({
-                    pathname: '/branches',
+                    pathname: '/cities',
                     params: { city: city.id },
                   })
                 }
@@ -251,7 +251,7 @@ export function BranchesScreen() {
                 isActive={district.isActive}
                 onPress={() =>
                   router.push({
-                    pathname: '/branches',
+                    pathname: '/cities',
                     params: { city: selectedCityId, district: district.id },
                   })
                 }

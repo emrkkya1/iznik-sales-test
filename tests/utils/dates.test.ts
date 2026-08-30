@@ -7,6 +7,7 @@ import {
   formatDateTime,
   parseIsoDate,
   formatIsoDate,
+  getDatePresetRange,
 } from '@/utils/dates';
 
 describe('getIstanbulToday', () => {
@@ -23,6 +24,36 @@ describe('getIstanbulToday', () => {
     expect(month).toBeLessThanOrEqual(12);
     expect(day).toBeGreaterThanOrEqual(1);
     expect(day).toBeLessThanOrEqual(31);
+  });
+});
+
+describe('getDatePresetRange', () => {
+  it('calculates an inclusive seven-day range across a month boundary', () => {
+    expect(getDatePresetRange('7d', '2026-03-03')).toEqual({
+      dateFrom: '2026-02-25',
+      dateTo: '2026-03-03',
+    });
+  });
+
+  it('calculates an inclusive thirty-day range across a year boundary', () => {
+    expect(getDatePresetRange('30d', '2026-01-05')).toEqual({
+      dateFrom: '2025-12-07',
+      dateTo: '2026-01-05',
+    });
+  });
+
+  it('uses the first day of the selected month', () => {
+    expect(getDatePresetRange('month', '2024-02-29')).toEqual({
+      dateFrom: '2024-02-01',
+      dateTo: '2024-02-29',
+    });
+  });
+
+  it('omits both dates for all time', () => {
+    expect(getDatePresetRange('all', '2026-08-30')).toEqual({
+      dateFrom: undefined,
+      dateTo: undefined,
+    });
   });
 });
 

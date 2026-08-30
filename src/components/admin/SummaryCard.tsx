@@ -8,11 +8,17 @@ import { formatCurrency, getBalanceTone } from '@/utils/formatters';
 type SummaryCardProps = {
   title: string;
   value: string | number | null;
-  format?: 'currency' | 'count' | 'text';
+  format?: 'currency' | 'count' | 'text' | 'percent' | 'quantity-delta';
   // Used by Güncel Bakiye card: positive balance paints info (we are owed),
   // negative balance paints destructive (we owe). Ignored for non-currency
   // values.
   colorCoded?: boolean;
+  /** Optional small line under the main value (e.g. "142 alınan"). */
+  secondaryValue?: string;
+  /** Tone for the secondary line. Defaults to muted. */
+  secondaryTone?: 'muted' | 'destructive' | 'info' | 'foreground';
+  /** When true, render "Veri yok" instead of the value (for percent when null). */
+  emptyLabel?: string;
   subtitle?: string;
   isLoading?: boolean;
   className?: string;
@@ -26,6 +32,11 @@ function renderValue(value: string | number | null, format: SummaryCardProps['fo
   if (value === null) return '';
   if (format === 'currency') return formatCurrency(Number(value));
   if (format === 'count') return formatCount(Number(value));
+  if (format === 'percent') {
+    const n = Number(value);
+    return `%${n.toFixed(1).replace(/\.0$/, '')}`;
+  }
+  if (format === 'quantity-delta') return formatCount(Number(value));
   return String(value);
 }
 
@@ -44,6 +55,9 @@ export function SummaryCard({
   value,
   format = 'text',
   colorCoded,
+  secondaryValue,
+  secondaryTone = 'muted',
+  emptyLabel,
   subtitle,
   isLoading = false,
   showBalanceTone = false,
@@ -60,6 +74,19 @@ export function SummaryCard({
   const toneLabel =
     showBalanceTone && isCurrencyNumber ? getBalanceTone(numericValue) : null;
 
+  const secondaryClass =
+    secondaryTone === 'destructive'
+      ? 'text-destructive'
+      : secondaryTone === 'info'
+        ? 'text-info'
+        : secondaryTone === 'foreground'
+          ? 'text-foreground'
+          : 'text-muted-foreground';
+
+  const showEmpty =
+    !isLoading && value === null && (format === 'percent' || emptyLabel);
+  const showSkeleton = isLoading || (!showEmpty && value === null);
+
   return (
     <Box
       className={`flex-1 rounded-2xl border border-border bg-card p-4 ${
@@ -70,8 +97,12 @@ export function SummaryCard({
         <Text size="sm" className="text-muted-foreground">
           {title}
         </Text>
-        {isLoading || value === null ? (
+        {showSkeleton ? (
           <Box className="h-7 w-24 rounded bg-muted" />
+        ) : showEmpty ? (
+          <Text size="xl" bold className="text-muted-foreground">
+            {emptyLabel ?? 'Veri yok'}
+          </Text>
         ) : (
           <HStack space="xs" className="items-baseline">
             <Text size="xl" bold className={valueClass}>
@@ -87,6 +118,11 @@ export function SummaryCard({
             ) : null}
           </HStack>
         )}
+        {secondaryValue ? (
+          <Text size="xs" className={secondaryClass}>
+            {secondaryValue}
+          </Text>
+        ) : null}
         {subtitle ? (
           <Text size="xs" className="text-muted-foreground">
             {subtitle}

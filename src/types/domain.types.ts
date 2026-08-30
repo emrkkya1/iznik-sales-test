@@ -189,10 +189,14 @@ export interface DeliveryItemWithProduct extends DeliveryItem {
 // Summary screen range selector
 export type SummaryRange = 'week' | 'month' | 'all';
 
-// Özet KPIs
+// Özet KPIs — extended in M18 with delivered / returned / return rate
 export interface SummaryKpis {
   totalSales: number;
   totalCollection: number;
+  deliveredQty: number;
+  returnedQty: number;
+  /** Percent 0-100; `null` when no deliveries in the range. */
+  returnRate: number | null;
   activeBranchCount: number;
   activeProductCount: number;
 }
@@ -252,6 +256,12 @@ export interface BranchHubDetails {
   totalProductCount: number;
   lastMovementDate: string | null;
   auditCount: number;
+  /** All-time delivered qty (across all deliveries on this branch). */
+  deliveredQty: number;
+  /** All-time returned qty. */
+  returnedQty: number;
+  /** Percent 0-100; `null` when no deliveries ever recorded. */
+  returnRate: number | null;
 }
 
 // Inputs for geography create mutations
@@ -341,4 +351,53 @@ export interface ActivateBranchProductInput {
   productId: string;
   price: number;
   effectiveFrom: string;
+}
+
+// ============================================
+// M18: Branches analytics table (Şubeler tab)
+// ============================================
+
+/** Day values sent to list_branches_analytics. 0=Sun..6=Sat (matches JS Date.getDay). */
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+export type BranchAnalyticsStatus = 'all' | 'active' | 'inactive';
+
+export type BranchAnalyticsSortBy =
+  | 'name'
+  | 'balance'
+  | 'return_rate'
+  | 'last_activity';
+
+export type BranchAnalyticsSortDir = 'asc' | 'desc';
+
+export interface BranchAnalyticsFilters {
+  search?: string;
+  status?: BranchAnalyticsStatus;
+  dateFrom?: string; // YYYY-MM-DD
+  dateTo?: string;
+  daysOfWeek?: DayOfWeek[];
+  sortBy?: BranchAnalyticsSortBy;
+  sortDir?: BranchAnalyticsSortDir;
+}
+
+export interface BranchAnalyticsRow {
+  branchId: string;
+  name: string;
+  cityName: string;
+  districtName: string;
+  /** Always as-of today. */
+  currentBalance: number;
+  /** Computed over the filtered date range + day-of-week mask. */
+  deliveredQty: number;
+  returnedQty: number;
+  /** Percent 0-100; `null` when deliveredQty is 0. */
+  returnRate: number | null;
+  /** Latest transaction in the selected metric range; null when none matches. */
+  lastActivityDate: string | null;
+  isActive: boolean;
+}
+
+export interface BranchAnalyticsPage {
+  rows: BranchAnalyticsRow[];
+  totalCount: number;
 }

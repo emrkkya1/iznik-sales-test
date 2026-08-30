@@ -5,3 +5,4 @@ export { formatRelativeDate } from './formatRelativeDate';
 export { getIstanbulToday, canEditDelivery, formatDateForDisplay } from './dates';
 export { generateIdempotencyKey } from './idempotency';
 export { mergeTopDistribution } from './distribution';
+export { CHART_PALETTE, CHART_AXIS_COLOR, CHART_LABEL_COLOR, CHART_PRIMARY_COLOR, chartColorAt } from './chartPalette';

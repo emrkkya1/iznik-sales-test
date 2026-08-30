@@ -1,5 +1,7 @@
 export { AdminShell } from './AdminShell';
 export { AdminPlaceholderScreen } from './AdminPlaceholderScreen';
 export { BranchHubScreen } from './BranchHubScreen';
-export { BranchesScreen } from './BranchesScreen';
+export { BranchesTableScreen } from './BranchesTableScreen';
+export { CitiesScreen } from './CitiesScreen';
+export { SettingsScreen } from './SettingsScreen';
 export { SummaryScreen } from './SummaryScreen';
